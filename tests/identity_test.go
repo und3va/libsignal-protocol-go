@@ -1,12 +1,13 @@
 package tests
 
 import (
+	"sync"
+	"testing"
+
 	"github.com/RadicalApp/complete"
 	"github.com/RadicalApp/libsignal-protocol-go/ecc"
 	"github.com/RadicalApp/libsignal-protocol-go/logger"
 	"github.com/RadicalApp/libsignal-protocol-go/util/keyhelper"
-	"sync"
-	"testing"
 )
 
 // TestIdentityKeys checks generating, signing, and verifying of identity keys.

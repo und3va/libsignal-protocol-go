@@ -2,10 +2,11 @@ package protocol
 
 import (
 	"errors"
+	"strconv"
+
 	"github.com/RadicalApp/libsignal-protocol-go/ecc"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/identity"
 	"github.com/RadicalApp/libsignal-protocol-go/util/optional"
-	"strconv"
 )
 
 // PreKeySignalMessageSerializer is an interface for serializing and deserializing
@@ -83,7 +84,6 @@ func NewPreKeySignalMessageFromStruct(structure *PreKeySignalMessageStructure,
 func NewPreKeySignalMessage(version int, registrationID uint32, preKeyID *optional.Uint32, signedPreKeyID uint32,
 	baseKey ecc.ECPublicKeyable, identityKey *identity.Key, message *SignalMessage, serializer PreKeySignalMessageSerializer,
 	msgSerializer SignalMessageSerializer) (*PreKeySignalMessage, error) {
-
 	structure := &PreKeySignalMessageStructure{
 		Version:        version,
 		RegistrationID: registrationID,

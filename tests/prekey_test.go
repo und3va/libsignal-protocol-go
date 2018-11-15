@@ -1,10 +1,11 @@
 package tests
 
 import (
+	"testing"
+
 	"github.com/RadicalApp/libsignal-protocol-go/logger"
 	"github.com/RadicalApp/libsignal-protocol-go/serialize"
 	"github.com/RadicalApp/libsignal-protocol-go/util/keyhelper"
-	"testing"
 )
 
 // TestPreKeys checks generating prekeys.
@@ -12,8 +13,8 @@ func TestPreKeys(t *testing.T) {
 
 	// Create a serializer object that will be used to encode/decode data.
 	serializer := serialize.NewSerializer()
-	serializer.SignalMessage = &serialize.JSONSignalMessageSerializer{}
-	serializer.PreKeySignalMessage = &serialize.JSONPreKeySignalMessageSerializer{}
+	serializer.SignalMessage = &serialize.ProtoBufSignalMessageSerializer{}
+	serializer.PreKeySignalMessage = &serialize.ProtoBufPreKeySignalMessageSerializer{}
 	serializer.SignedPreKeyRecord = &serialize.JSONSignedPreKeyRecordSerializer{}
 
 	logger.Info("Testing prekey generation...")

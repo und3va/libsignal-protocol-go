@@ -4,14 +4,15 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"errors"
+	"strconv"
+
 	"github.com/RadicalApp/libsignal-protocol-go/ecc"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/identity"
 	"github.com/RadicalApp/libsignal-protocol-go/logger"
 	"github.com/RadicalApp/libsignal-protocol-go/util/bytehelper"
-	"strconv"
 )
 
-const macLength int = 8
+const MacLength int = 8
 
 // SignalMessageSerializer is an interface for serializing and deserializing
 // SignalMessages into bytes. An implementation of this interface should be
@@ -218,5 +219,5 @@ func getMac(messageVersion int, senderIdentityKey, receiverIdentityKey *identity
 
 	fullMac := mac.Sum(nil)
 
-	return bytehelper.Trim(fullMac, macLength), nil
+	return bytehelper.Trim(fullMac, MacLength), nil
 }

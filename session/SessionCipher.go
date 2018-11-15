@@ -2,6 +2,8 @@ package session
 
 import (
 	"errors"
+	"strconv"
+
 	"github.com/RadicalApp/libsignal-protocol-go/cipher"
 	"github.com/RadicalApp/libsignal-protocol-go/ecc"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/chain"
@@ -11,7 +13,6 @@ import (
 	"github.com/RadicalApp/libsignal-protocol-go/state/record"
 	"github.com/RadicalApp/libsignal-protocol-go/state/store"
 	"github.com/RadicalApp/libsignal-protocol-go/util/bytehelper"
-	"strconv"
 )
 
 const maxFutureMessages = 5000

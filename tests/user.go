@@ -60,7 +60,7 @@ func newUser(name string, deviceID uint32, serializer *serialize.Serializer) *us
 	signalUser.registrationID = keyhelper.GenerateRegistrationID()
 
 	// Generate PreKeys
-	signalUser.preKeys, _ = keyhelper.GeneratePreKeys(0, 100, serializer.PreKeyRecord)
+	signalUser.preKeys, _ = keyhelper.GeneratePreKeys(1, 100, serializer.PreKeyRecord)
 
 	// Generate Signed PreKey
 	signalUser.signedPreKey, _ = keyhelper.GenerateSignedPreKey(signalUser.identityKeyPair, 0, serializer.SignedPreKeyRecord)

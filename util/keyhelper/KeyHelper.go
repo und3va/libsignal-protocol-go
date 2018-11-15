@@ -4,11 +4,12 @@ package keyhelper
 import (
 	"crypto/rand"
 	"encoding/binary"
+	"time"
+
 	"github.com/RadicalApp/complete"
 	"github.com/RadicalApp/libsignal-protocol-go/ecc"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/identity"
 	"github.com/RadicalApp/libsignal-protocol-go/state/record"
-	"time"
 )
 
 // GenerateIdentityKeyPair generates an identity keypair used for
@@ -46,9 +47,7 @@ func GenerateIdentityKeyPairAsync(completion complete.Completionable) {
 func GeneratePreKeys(start int, count int, serializer record.PreKeySerializer) ([]*record.PreKey, error) {
 	var preKeys []*record.PreKey
 
-	start--
-
-	for i := 0; i < count; i++ {
+	for i := start; i <= count; i++ {
 		key, err := ecc.GenerateKeyPair()
 		if err != nil {
 			return nil, err
