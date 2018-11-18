@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-const ADDRESS_SEPARATOR = "~"
+const ADDRESS_SEPARATOR = ":"
 
 // NewSignalAddress returns a new signal address.
 func NewSignalAddress(name string, deviceID uint32) *SignalAddress {
