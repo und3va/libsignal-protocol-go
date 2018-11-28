@@ -46,11 +46,6 @@ func generateSignedPreKey(this js.Value, args []js.Value) interface{} {
 }
 
 func generatePreKeys(this js.Value, args []js.Value) interface{} {
-	value := js.Global().Call("getIdentityKeyFromStore", "-1")
-	result, ok := value.Await()
-	fmt.Println(ok)
-	fmt.Println(result)
-
 	if len(args) != 2 {
 		// TODO
 	}
