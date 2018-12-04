@@ -14,9 +14,9 @@ import (
 	"github.com/RadicalApp/libsignal-protocol-go/util/keyhelper"
 )
 
-func getIdentityKeyPair(this js.Value, args []js.Value) interface{} {
+func generateIdentityKeyPair(this js.Value, args []js.Value) interface{} {
 	identityKeyPair, err := keyhelper.GenerateIdentityKeyPair()
-	regId := keyhelper.GenerateRegistrationID()
+
 	if err != nil {
 		// TODO
 		fmt.Println(err.Error())
@@ -25,7 +25,11 @@ func getIdentityKeyPair(this js.Value, args []js.Value) interface{} {
 	publicKey := identityKeyPair.PublicKey().Serialize()
 	pub := hex.EncodeToString(publicKey[:])
 	priv := hex.EncodeToString(privateKey[:])
-	return map[string]interface{}{"pub": pub, "priv": priv, "regId": regId}
+	return map[string]interface{}{"pub": pub, "priv": priv}
+}
+
+func generateRegId(this js.Value, args []js.Value) interface{} {
+	return keyhelper.GenerateRegistrationID()
 }
 
 func generateSignedPreKey(this js.Value, args []js.Value) interface{} {
@@ -63,9 +67,10 @@ func generatePreKeys(this js.Value, args []js.Value) interface{} {
 }
 
 func registerCallbacks() {
-	js.Global().Set("getIdentityKeyPairFromGo", js.NewCallback(getIdentityKeyPair))
+	js.Global().Set("generateKeyPairFromGo", js.NewCallback(generateIdentityKeyPair))
 	js.Global().Set("generateSignedPreKeyFromGo", js.NewCallback(generateSignedPreKey))
 	js.Global().Set("generatePreKeysFromGo", js.NewCallback(generatePreKeys))
+	js.Global().Set("generateRegIdFromGo", js.NewCallback(generateRegId))
 }
 
 func main() {
