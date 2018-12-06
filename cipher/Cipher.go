@@ -8,6 +8,31 @@ import (
 	"errors"
 )
 
+// aesDecrypt decrypts the given ciphertext under the given key in AES-CBC mode
+func AesDecrypt(key, ciphertext []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(ciphertext)%aes.BlockSize != 0 {
+		return nil, errors.New("ciphertext not multiple of AES blocksize")
+	}
+
+	iv := ciphertext[:aes.BlockSize]
+	source := ciphertext[aes.BlockSize:]
+	mode := cipher.NewCBCDecrypter(block, iv)
+	mode.CryptBlocks(source, source)
+
+	length := len(source)
+	unpadding := int(source[length-1])
+	if unpadding > length {
+		return nil, errors.New("error unpadding")
+	}
+	decrypted := string(source[:length-unpadding])
+	return []byte(decrypted), nil
+}
+
 // Decrypt will use the given key, iv, and ciphertext and return
 // the plaintext bytes.
 func Decrypt(iv, key, ciphertext []byte) ([]byte, error) {
