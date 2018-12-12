@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"strings"
@@ -34,6 +35,18 @@ func generateKeyPair(this js.Value, args []js.Value) interface{} {
 		// TODO
 		fmt.Println(err.Error())
 	}
+	public := keyPair.PublicKey().Serialize()
+	private := keyPair.PrivateKey().Serialize()
+	pub := hex.EncodeToString(public[:])
+	priv := hex.EncodeToString(private[:])
+	return map[string]interface{}{"pub": pub, "priv": priv}
+}
+
+func createKeyPair(this js.Value, args []js.Value) interface{} {
+	privateKey := args[0].String()
+	decoded, _ := base64.StdEncoding.DecodeString(privateKey)
+	keyPair := ecc.CreateKeyPair(decoded)
+
 	public := keyPair.PublicKey().Serialize()
 	private := keyPair.PrivateKey().Serialize()
 	pub := hex.EncodeToString(public[:])
@@ -85,6 +98,7 @@ func registerCallbacks() {
 	js.Global().Set("generateSignedPreKeyFromGo", js.NewCallback(generateSignedPreKey))
 	js.Global().Set("generatePreKeysFromGo", js.NewCallback(generatePreKeys))
 	js.Global().Set("generateRegIdFromGo", js.NewCallback(generateRegId))
+	js.Global().Set("createKeyPairFromGo", js.NewCallback(createKeyPair))
 }
 
 func main() {

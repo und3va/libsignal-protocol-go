@@ -59,7 +59,6 @@ func Decrypt(cipherText string, privateKey string) error {
 	iv := parts[0]
 	ciphertext := parts[1]
 	mac := parts[2]
-	ivAndCiphertext := append(iv, ciphertext...)
 
 	var keyMaterial []byte
 	sharedSecret := kdf.CalculateSharedSecret(masterEphemeral, bytehelper.SliceToArray(ourPrivateKey))
@@ -77,8 +76,7 @@ func Decrypt(cipherText string, privateKey string) error {
 	if !verifyMAC(macKey, versionAndIvAndCiphertext, mac) {
 		return fmt.Errorf("Verify Mac failed")
 	}
-	plaintext, err := cipher.AesDecrypt(aesKey, ivAndCiphertext)
-	// plaintext, err := cipher.Decrypt(iv, key, ciphertext)
+	plaintext, err := cipher.Decrypt(iv, aesKey, ciphertext)
 	if err != nil {
 		fmt.Println(err)
 	}
