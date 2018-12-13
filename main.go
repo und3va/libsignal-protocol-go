@@ -59,10 +59,10 @@ func generateRegId(this js.Value, args []js.Value) interface{} {
 }
 
 func generateSignedPreKey(this js.Value, args []js.Value) interface{} {
-	if len(args) != 2 {
+	if len(args) != 3 {
 		// TODO
 	}
-	pub, priv := args[0], args[1]
+	pub, priv, id := args[0], args[1], args[2]
 	public, _ := hex.DecodeString(pub.String())
 	private, _ := hex.DecodeString(priv.String())
 
@@ -70,7 +70,7 @@ func generateSignedPreKey(this js.Value, args []js.Value) interface{} {
 	publicKey := identity.NewKeyFromBytes(bytehelper.SliceToArray(public), 0)
 	identityKeyPair := identity.NewKeyPair(&publicKey, privateKey)
 	serializer := serialize.NewProtoBufSerializer()
-	signedPeKey, _ := keyhelper.GenerateSignedPreKey(identityKeyPair, 1, serializer.SignedPreKeyRecord)
+	signedPeKey, _ := keyhelper.GenerateSignedPreKey(identityKeyPair, uint32(id.Int()), serializer.SignedPreKeyRecord)
 	h := hex.EncodeToString(signedPeKey.Serialize())
 	return map[string]interface{}{"id": signedPeKey.ID(), "record": h}
 }
