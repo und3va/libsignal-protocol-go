@@ -24,8 +24,8 @@ func generateIdentityKeyPair(this js.Value, args []js.Value) interface{} {
 	}
 	publicKey := identityKeyPair.PublicKey().Serialize()
 	privateKey := identityKeyPair.PrivateKey().Serialize()
-	pub := hex.EncodeToString(publicKey[:])
-	priv := hex.EncodeToString(privateKey[:])
+	pub := base64.StdEncoding.EncodeToString(publicKey)
+	priv := base64.StdEncoding.EncodeToString(privateKey[:])
 	return map[string]interface{}{"pub": pub, "priv": priv}
 }
 
@@ -37,8 +37,8 @@ func generateKeyPair(this js.Value, args []js.Value) interface{} {
 	}
 	public := keyPair.PublicKey().Serialize()
 	private := keyPair.PrivateKey().Serialize()
-	pub := hex.EncodeToString(public[:])
-	priv := hex.EncodeToString(private[:])
+	pub := base64.StdEncoding.EncodeToString(public)
+	priv := base64.StdEncoding.EncodeToString(private[:])
 	return map[string]interface{}{"pub": pub, "priv": priv}
 }
 
@@ -49,8 +49,8 @@ func createKeyPair(this js.Value, args []js.Value) interface{} {
 
 	public := keyPair.PublicKey().Serialize()
 	private := keyPair.PrivateKey().Serialize()
-	pub := hex.EncodeToString(public[:])
-	priv := hex.EncodeToString(private[:])
+	pub := base64.StdEncoding.EncodeToString(public)
+	priv := base64.StdEncoding.EncodeToString(private[:])
 	return map[string]interface{}{"pub": pub, "priv": priv}
 }
 
@@ -63,8 +63,8 @@ func generateSignedPreKey(this js.Value, args []js.Value) interface{} {
 		// TODO
 	}
 	pub, priv, id := args[0], args[1], args[2]
-	public, _ := hex.DecodeString(pub.String())
-	private, _ := hex.DecodeString(priv.String())
+	public, _ := base64.StdEncoding.DecodeString(pub.String())
+	private, _ := base64.StdEncoding.DecodeString(priv.String())
 
 	privateKey := ecc.NewDjbECPrivateKey(bytehelper.SliceToArray(private))
 	publicKey := identity.NewKeyFromBytes(bytehelper.SliceToArray(public), 0)
@@ -93,12 +93,12 @@ func generatePreKeys(this js.Value, args []js.Value) interface{} {
 }
 
 func registerCallbacks() {
-	js.Global().Set("generateIdentityKeyPaireFromGo", js.NewCallback(generateIdentityKeyPair))
-	js.Global().Set("generateKeyPairFromGo", js.NewCallback(generateKeyPair))
-	js.Global().Set("generateSignedPreKeyFromGo", js.NewCallback(generateSignedPreKey))
-	js.Global().Set("generatePreKeysFromGo", js.NewCallback(generatePreKeys))
-	js.Global().Set("generateRegIdFromGo", js.NewCallback(generateRegId))
-	js.Global().Set("createKeyPairFromGo", js.NewCallback(createKeyPair))
+	js.Global().Set("generateIdentityKeyPaireFromGo", js.FuncOf(generateIdentityKeyPair))
+	js.Global().Set("generateKeyPairFromGo", js.FuncOf(generateKeyPair))
+	js.Global().Set("generateSignedPreKeyFromGo", js.FuncOf(generateSignedPreKey))
+	js.Global().Set("generatePreKeysFromGo", js.FuncOf(generatePreKeys))
+	js.Global().Set("generateRegIdFromGo", js.FuncOf(generateRegId))
+	js.Global().Set("createKeyPairFromGo", js.FuncOf(createKeyPair))
 }
 
 func main() {
