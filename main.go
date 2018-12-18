@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -10,9 +11,13 @@ import (
 
 	"github.com/RadicalApp/libsignal-protocol-go/ecc"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/identity"
+	"github.com/RadicalApp/libsignal-protocol-go/keys/prekey"
+	"github.com/RadicalApp/libsignal-protocol-go/protocol"
 	"github.com/RadicalApp/libsignal-protocol-go/serialize"
+	"github.com/RadicalApp/libsignal-protocol-go/session"
 	"github.com/RadicalApp/libsignal-protocol-go/util/bytehelper"
 	"github.com/RadicalApp/libsignal-protocol-go/util/keyhelper"
+	"github.com/RadicalApp/libsignal-protocol-go/util/optional"
 )
 
 func generateIdentityKeyPair(this js.Value, args []js.Value) interface{} {
@@ -92,6 +97,84 @@ func generatePreKeys(this js.Value, args []js.Value) interface{} {
 	return strings.Join(encodePreKeys, ",")
 }
 
+func containsSession(this js.Value, args []js.Value) interface{} {
+	if len(args) != 2 {
+	}
+	name, deviceId := args[0].String(), args[1].Int()
+	serializer := serialize.NewProtoBufSerializer()
+	sessionStore := NewMixinSessionStore(serializer)
+	result := sessionStore.ContainsSession(protocol.NewSignalAddress(name, uint32(deviceId)))
+	return result
+}
+
+type ConsumeSignedPreKey struct {
+	KeyId     int    `json:"key_id"`
+	PubKey    []byte `json:"pub_key"`
+	Signature []byte `json:"signature"`
+}
+
+type ConsumeOneTimeKey struct {
+	KeyId  int    `json:"key_id"`
+	PubKey []byte `json:"pub_key"`
+}
+
+type ConsumePreKeyBundle struct {
+	UserId         string              `json:"user_id"`
+	RegistrationId int                 `json:"registration_id"`
+	IdentityKey    []byte              `json:"identity_key"`
+	Signed         ConsumeSignedPreKey `json:"signed_pre_key"`
+	OnetimeKey     ConsumeOneTimeKey   `json:"one_time_pre_key"`
+}
+
+func processSession(this js.Value, args []js.Value) interface{} {
+	if len(args) != 3 {
+	}
+	name, deviceId, bundle := args[0].String(), args[1].Int(), args[2].String()
+
+	var preKeyBundle ConsumePreKeyBundle
+	err := json.Unmarshal([]byte(bundle), &preKeyBundle)
+	if err != nil {
+		// TODO
+	}
+	preKeyPublic, err := ecc.DecodePoint(preKeyBundle.OnetimeKey.PubKey, 0)
+	signedPreKeyPublic, err := ecc.DecodePoint(preKeyBundle.Signed.PubKey, 0)
+	signature := bytehelper.SliceToArray64(preKeyBundle.Signed.Signature)
+	identityKey := identity.NewKeyFromBytes(bytehelper.SliceToArray(preKeyBundle.IdentityKey), 0)
+
+	retrievedPreKey := prekey.NewBundle(uint32(preKeyBundle.RegistrationId), uint32(deviceId),
+		optional.NewOptionalUint32(uint32(preKeyBundle.OnetimeKey.KeyId)), uint32(preKeyBundle.Signed.KeyId),
+		preKeyPublic, signedPreKeyPublic, signature, &identityKey)
+
+	serializer := serialize.NewProtoBufSerializer()
+	sessionStore := NewMixinSessionStore(serializer)
+	preKeyStore := NewMixinPreKeyStore(serializer)
+	signedPreKeyStore := NewMixinSignedPreKeyStore(serializer)
+	identityStore := NewMixinIdentityKeyStore()
+	address := protocol.NewSignalAddress(name, uint32(deviceId))
+	sessionBuilder := session.NewBuilder(
+		sessionStore,
+		preKeyStore,
+		signedPreKeyStore,
+		identityStore,
+		address,
+		serializer,
+	)
+
+	err = sessionBuilder.ProcessBundle(retrievedPreKey)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func test(this js.Value, args []js.Value) interface{} {
+	store := NewMixinIdentityKeyStore()
+	store.GetIdentityKeyPair()
+	id := store.GetLocalRegistrationId()
+	fmt.Println(id)
+	return nil
+}
+
 func registerCallbacks() {
 	js.Global().Set("generateIdentityKeyPaireFromGo", js.FuncOf(generateIdentityKeyPair))
 	js.Global().Set("generateKeyPairFromGo", js.FuncOf(generateKeyPair))
@@ -99,6 +182,11 @@ func registerCallbacks() {
 	js.Global().Set("generatePreKeysFromGo", js.FuncOf(generatePreKeys))
 	js.Global().Set("generateRegIdFromGo", js.FuncOf(generateRegId))
 	js.Global().Set("createKeyPairFromGo", js.FuncOf(createKeyPair))
+
+	js.Global().Set("containsSessionFromGo", js.FuncOf(containsSession))
+	js.Global().Set("processSessionFromGo", js.FuncOf(processSession))
+
+	js.Global().Set("test", js.FuncOf(test))
 }
 
 func main() {
