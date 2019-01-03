@@ -10,6 +10,7 @@ import (
 	"syscall/js"
 
 	"github.com/RadicalApp/libsignal-protocol-go/ecc"
+	"github.com/RadicalApp/libsignal-protocol-go/groups"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/identity"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/prekey"
 	"github.com/RadicalApp/libsignal-protocol-go/protocol"
@@ -175,16 +176,60 @@ func test(this js.Value, args []js.Value) interface{} {
 	return nil
 }
 
+func encryptSenderKey(this js.Value, args []js.Value) interface{} {
+	// encryptSenderKeyFromGo(groupId, recipientId, recipientDeviceId, senderId, senderDeviceId)
+	if len(args) != 5 {
+		return nil
+	}
+	groupId := args[0].String()
+	recipientId, recipientDeviceId := args[1].String(), args[2].Int()
+	senderId, senderDeviceId := args[3].String(), args[4].Int()
+	address := protocol.NewSignalAddress(senderId, uint32(senderDeviceId))
+	senderKeyName := protocol.NewSenderKeyName(groupId, address)
+	serializer := serialize.NewProtoBufSerializer()
+	senderKeyStore := NewMixinSenderKeyStore(serializer)
+	builder := groups.NewGroupSessionBuilder(senderKeyStore, serializer)
+	senderKeyDistributionMessage, err := builder.Create(senderKeyName)
+	if err != nil {
+		return nil
+	}
+	remoteAddress := protocol.NewSignalAddress(recipientId, uint32(recipientDeviceId))
+	ciphertextMessage, err := encryptSession(senderKeyDistributionMessage.Serialize(), remoteAddress)
+	if err != nil {
+		return nil
+	}
+	return encodeMessageData(ciphertextMessage.Type(), ciphertextMessage.Serialize(), "")
+}
+
+func encryptSession(plaintext []byte, remoteAddress *protocol.SignalAddress) (protocol.CiphertextMessage, error) {
+	serializer := serialize.NewProtoBufSerializer()
+	signalProtocolStore := NewMixinSignalProtocolStore(serializer)
+	buidler := session.NewBuilderFromSignal(signalProtocolStore, remoteAddress, serializer)
+	cipher := session.NewCipher(buidler, remoteAddress)
+	ciphertextMessage, err := cipher.Encrypt(plaintext)
+	if err != nil {
+		return nil, err
+	}
+	return ciphertextMessage, nil
+}
+
+func encodeMessageData(keyType uint32, cipher []byte, resendMessageId string) string {
+	header := []byte{byte(protocol.CurrentVersion), byte(keyType), 0, 0, 0, 0, 0, 0}
+	ciphertext := append(header, cipher...)
+	return base64.StdEncoding.EncodeToString(ciphertext)
+}
+
 func registerCallbacks() {
 	js.Global().Set("generateIdentityKeyPaireFromGo", js.FuncOf(generateIdentityKeyPair))
 	js.Global().Set("generateKeyPairFromGo", js.FuncOf(generateKeyPair))
-	js.Global().Set("generateSignedPreKeyFromGo", js.FuncOf(generateSignedPreKey))
+	js.Global().Set("gbenerateSignedPreKeyFromGo", js.FuncOf(generateSignedPreKey))
 	js.Global().Set("generatePreKeysFromGo", js.FuncOf(generatePreKeys))
 	js.Global().Set("generateRegIdFromGo", js.FuncOf(generateRegId))
 	js.Global().Set("createKeyPairFromGo", js.FuncOf(createKeyPair))
 
 	js.Global().Set("containsSessionFromGo", js.FuncOf(containsSession))
 	js.Global().Set("processSessionFromGo", js.FuncOf(processSession))
+	js.Global().Set("encryptSenderKeyFromGo", js.FuncOf(encryptSenderKey))
 
 	js.Global().Set("test", js.FuncOf(test))
 }

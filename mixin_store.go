@@ -97,17 +97,17 @@ func (i *MixinPreKeyStore) RemovePreKey(preKeyID uint32) {
 }
 
 // SessionStore
-func NewMixinSessionStore(serializer *serialize.Serializer) *MixinSession {
-	return &MixinSession{
+func NewMixinSessionStore(serializer *serialize.Serializer) *MixinSessionStore {
+	return &MixinSessionStore{
 		serializer: serializer,
 	}
 }
 
-type MixinSession struct {
+type MixinSessionStore struct {
 	serializer *serialize.Serializer
 }
 
-func (i *MixinSession) LoadSession(address *protocol.SignalAddress) *record.Session {
+func (i *MixinSessionStore) LoadSession(address *protocol.SignalAddress) *record.Session {
 	result := js.Global().Get("signalDao").Call("getSession", address.Name(), address.DeviceID())
 	if result == js.Undefined() {
 		return nil
@@ -123,18 +123,18 @@ func (i *MixinSession) LoadSession(address *protocol.SignalAddress) *record.Sess
 	return nil
 }
 
-func (i *MixinSession) GetSubDeviceSessions(name string) []uint32 {
+func (i *MixinSessionStore) GetSubDeviceSessions(name string) []uint32 {
 	var deviceIDs []uint32
 
 	return deviceIDs
 }
 
-func (i *MixinSession) StoreSession(remoteAddress *protocol.SignalAddress, record *record.Session) {
+func (i *MixinSessionStore) StoreSession(remoteAddress *protocol.SignalAddress, record *record.Session) {
 	rec := hex.EncodeToString(record.Serialize())
 	js.Global().Get("signalDao").Call("saveSession", remoteAddress.Name(), remoteAddress.DeviceID(), rec)
 }
 
-func (i *MixinSession) ContainsSession(remoteAddress *protocol.SignalAddress) bool {
+func (i *MixinSessionStore) ContainsSession(remoteAddress *protocol.SignalAddress) bool {
 	result := js.Global().Get("signalDao").Call("getSession", remoteAddress.Name(), remoteAddress.DeviceID())
 	if result == js.Undefined() {
 		return false
@@ -142,26 +142,26 @@ func (i *MixinSession) ContainsSession(remoteAddress *protocol.SignalAddress) bo
 	return true
 }
 
-func (i *MixinSession) DeleteSession(remoteAddress *protocol.SignalAddress) {
+func (i *MixinSessionStore) DeleteSession(remoteAddress *protocol.SignalAddress) {
 	js.Global().Get("signalDao").Call("deleteSession", remoteAddress.Name(), remoteAddress.DeviceID())
 }
 
-func (i *MixinSession) DeleteAllSessions() {
+func (i *MixinSessionStore) DeleteAllSessions() {
 	// i.sessions = make(map[*protocol.SignalAddress]*record.Session)
 }
 
 // SignedPreKeyStore
-func NewMixinSignedPreKeyStore(serializer *serialize.Serializer) *MixinSignedPreKey {
-	return &MixinSignedPreKey{
+func NewMixinSignedPreKeyStore(serializer *serialize.Serializer) *MixinSignedPreKeyStore {
+	return &MixinSignedPreKeyStore{
 		serializer: serializer,
 	}
 }
 
-type MixinSignedPreKey struct {
+type MixinSignedPreKeyStore struct {
 	serializer *serialize.Serializer
 }
 
-func (i *MixinSignedPreKey) LoadSignedPreKey(signedPreKeyID uint32) *record.SignedPreKey {
+func (i *MixinSignedPreKeyStore) LoadSignedPreKey(signedPreKeyID uint32) *record.SignedPreKey {
 	result := js.Global().Get("signalDao").Call("getSignedPreKey", signedPreKeyID)
 	if result == js.Undefined() {
 		return nil
@@ -174,7 +174,7 @@ func (i *MixinSignedPreKey) LoadSignedPreKey(signedPreKeyID uint32) *record.Sign
 	return signedPreKey
 }
 
-func (i *MixinSignedPreKey) LoadSignedPreKeys() []*record.SignedPreKey {
+func (i *MixinSignedPreKeyStore) LoadSignedPreKeys() []*record.SignedPreKey {
 	result := js.Global().Get("signalDao").Call("getAllSignedPreKeys")
 	if result == js.Undefined() {
 		return nil
@@ -189,12 +189,12 @@ func (i *MixinSignedPreKey) LoadSignedPreKeys() []*record.SignedPreKey {
 	return preKeys
 }
 
-func (i *MixinSignedPreKey) StoreSignedPreKey(signedPreKeyID uint32, record *record.SignedPreKey) {
+func (i *MixinSignedPreKeyStore) StoreSignedPreKey(signedPreKeyID uint32, record *record.SignedPreKey) {
 	recordStr := hex.EncodeToString(record.Serialize())
 	js.Global().Get("signalDao").Call("saveSignedPreKey", signedPreKeyID, recordStr)
 }
 
-func (i *MixinSignedPreKey) ContainsSignedPreKey(signedPreKeyID uint32) bool {
+func (i *MixinSignedPreKeyStore) ContainsSignedPreKey(signedPreKeyID uint32) bool {
 	result := js.Global().Get("signalDao").Call("getSignedPreKey", signedPreKeyID)
 	if result == js.Undefined() {
 		return false
@@ -202,28 +202,28 @@ func (i *MixinSignedPreKey) ContainsSignedPreKey(signedPreKeyID uint32) bool {
 	return true
 }
 
-func (i *MixinSignedPreKey) RemoveSignedPreKey(signedPreKeyID uint32) {
+func (i *MixinSignedPreKeyStore) RemoveSignedPreKey(signedPreKeyID uint32) {
 	js.Global().Get("signalDao").Call("deleteSignedPreKey", signedPreKeyID)
 }
 
-func NewMixinSenderKeyStore(serializer *serialize.Serializer) *MixinSenderKey {
-	return &MixinSenderKey{
+func NewMixinSenderKeyStore(serializer *serialize.Serializer) *MixinSenderKeyStore {
+	return &MixinSenderKeyStore{
 		serializer:      serializer.SenderKeyRecord,
 		stateSerializer: serializer.SenderKeyState,
 	}
 }
 
-type MixinSenderKey struct {
+type MixinSenderKeyStore struct {
 	serializer      groupRecord.SenderKeySerializer
 	stateSerializer groupRecord.SenderKeyStateSerializer
 }
 
-func (i *MixinSenderKey) StoreSenderKey(senderKeyName *protocol.SenderKeyName, keyRecord *groupRecord.SenderKey) {
+func (i *MixinSenderKeyStore) StoreSenderKey(senderKeyName *protocol.SenderKeyName, keyRecord *groupRecord.SenderKey) {
 	recordStr := hex.EncodeToString(keyRecord.Serialize())
 	js.Global().Get("signalDao").Call("saveSenderKey", senderKeyName.GroupID(), senderKeyName.Sender().String(), recordStr)
 }
 
-func (i *MixinSenderKey) LoadSenderKey(senderKeyName *protocol.SenderKeyName) *groupRecord.SenderKey {
+func (i *MixinSenderKeyStore) LoadSenderKey(senderKeyName *protocol.SenderKeyName) *groupRecord.SenderKey {
 	result := js.Global().Get("signalDao").Call("getSenderKey", senderKeyName.GroupID(), senderKeyName.Sender())
 	if result == js.Undefined() {
 		return nil
