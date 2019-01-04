@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"syscall/js"
 
 	"github.com/RadicalApp/libsignal-protocol-go/ecc"
@@ -110,17 +111,19 @@ type MixinSessionStore struct {
 func (i *MixinSessionStore) LoadSession(address *protocol.SignalAddress) *record.Session {
 	result := js.Global().Get("signalDao").Call("getSession", address.Name(), address.DeviceID())
 	if result == js.Undefined() {
-		return nil
+		sessionRecord := record.NewSession(i.serializer.Session, i.serializer.State)
+		return sessionRecord
 	}
-
-	// if i.ContainsSession(address) {
-	// 	return i.sessions[address]
-	// }
-	// sessionRecord := record.NewSession(i.serializer.Session, i.serializer.State)
-	// i.sessions[address] = sessionRecord
-
-	// return sessionRecord
-	return nil
+	recordResult := result.Get("record")
+	serialized, err := hex.DecodeString(recordResult.String())
+	if err != nil {
+		fmt.Println(err)
+	}
+	sessionRecord, err := record.NewSessionFromBytes(serialized, i.serializer.Session, i.serializer.State)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return sessionRecord
 }
 
 func (i *MixinSessionStore) GetSubDeviceSessions(name string) []uint32 {
@@ -224,7 +227,7 @@ func (i *MixinSenderKeyStore) StoreSenderKey(senderKeyName *protocol.SenderKeyNa
 }
 
 func (i *MixinSenderKeyStore) LoadSenderKey(senderKeyName *protocol.SenderKeyName) *groupRecord.SenderKey {
-	result := js.Global().Get("signalDao").Call("getSenderKey", senderKeyName.GroupID(), senderKeyName.Sender())
+	result := js.Global().Get("signalDao").Call("getSenderKey", senderKeyName.GroupID(), senderKeyName.Sender().String())
 	if result == js.Undefined() {
 		return nil
 	}

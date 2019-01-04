@@ -53,8 +53,11 @@ func createKeyPair(this js.Value, args []js.Value) interface{} {
 	decoded, _ := base64.StdEncoding.DecodeString(privateKey)
 	keyPair := ecc.CreateKeyPair(decoded)
 
-	public := keyPair.PublicKey().Serialize()
-	private := keyPair.PrivateKey().Serialize()
+	publicKey := identity.NewKey(keyPair.PublicKey())
+	identityKeyPair := identity.NewKeyPair(publicKey, keyPair.PrivateKey())
+
+	public := identityKeyPair.PublicKey().Serialize()
+	private := identityKeyPair.PrivateKey().Serialize()
 	pub := base64.StdEncoding.EncodeToString(public)
 	priv := base64.StdEncoding.EncodeToString(private[:])
 	return map[string]interface{}{"pub": pub, "priv": priv}
@@ -72,9 +75,10 @@ func generateSignedPreKey(this js.Value, args []js.Value) interface{} {
 	public, _ := base64.StdEncoding.DecodeString(pub.String())
 	private, _ := base64.StdEncoding.DecodeString(priv.String())
 
+	publicKeyable, _ := ecc.DecodePoint(public, 0)
+	publicKey := identity.NewKey(publicKeyable)
 	privateKey := ecc.NewDjbECPrivateKey(bytehelper.SliceToArray(private))
-	publicKey := identity.NewKeyFromBytes(bytehelper.SliceToArray(public), 0)
-	identityKeyPair := identity.NewKeyPair(&publicKey, privateKey)
+	identityKeyPair := identity.NewKeyPair(publicKey, privateKey)
 	serializer := serialize.NewProtoBufSerializer()
 	signedPeKey, _ := keyhelper.GenerateSignedPreKey(identityKeyPair, uint32(id.Int()), serializer.SignedPreKeyRecord)
 	h := hex.EncodeToString(signedPeKey.Serialize())
@@ -138,34 +142,35 @@ func processSession(this js.Value, args []js.Value) interface{} {
 		// TODO
 	}
 	preKeyPublic, err := ecc.DecodePoint(preKeyBundle.OnetimeKey.PubKey, 0)
+	if err != nil {
+		fmt.Println(err)
+	}
 	signedPreKeyPublic, err := ecc.DecodePoint(preKeyBundle.Signed.PubKey, 0)
+	if err != nil {
+		fmt.Println(err)
+	}
 	signature := bytehelper.SliceToArray64(preKeyBundle.Signed.Signature)
-	identityKey := identity.NewKeyFromBytes(bytehelper.SliceToArray(preKeyBundle.IdentityKey), 0)
+	publicKeyable, _ := ecc.DecodePoint(preKeyBundle.IdentityKey, 0)
+	identityKey := identity.NewKey(publicKeyable)
 
 	retrievedPreKey := prekey.NewBundle(uint32(preKeyBundle.RegistrationId), uint32(deviceId),
 		optional.NewOptionalUint32(uint32(preKeyBundle.OnetimeKey.KeyId)), uint32(preKeyBundle.Signed.KeyId),
-		preKeyPublic, signedPreKeyPublic, signature, &identityKey)
+		preKeyPublic, signedPreKeyPublic, signature, identityKey)
 
 	serializer := serialize.NewProtoBufSerializer()
-	sessionStore := NewMixinSessionStore(serializer)
-	preKeyStore := NewMixinPreKeyStore(serializer)
-	signedPreKeyStore := NewMixinSignedPreKeyStore(serializer)
-	identityStore := NewMixinIdentityKeyStore()
-	address := protocol.NewSignalAddress(name, uint32(deviceId))
-	sessionBuilder := session.NewBuilder(
-		sessionStore,
-		preKeyStore,
-		signedPreKeyStore,
-		identityStore,
-		address,
+	signalProtocolStore := NewMixinSignalProtocolStore(serializer)
+	remoteAddress := protocol.NewSignalAddress(name, uint32(deviceId))
+	sessionBuilder := session.NewBuilderFromSignal(
+		signalProtocolStore,
+		remoteAddress,
 		serializer,
 	)
-
 	err = sessionBuilder.ProcessBundle(retrievedPreKey)
 	if err != nil {
-		return err
+		fmt.Println(err)
+		return false
 	}
-	return nil
+	return true
 }
 
 func test(this js.Value, args []js.Value) interface{} {
@@ -177,7 +182,6 @@ func test(this js.Value, args []js.Value) interface{} {
 }
 
 func encryptSenderKey(this js.Value, args []js.Value) interface{} {
-	// encryptSenderKeyFromGo(groupId, recipientId, recipientDeviceId, senderId, senderDeviceId)
 	if len(args) != 5 {
 		return nil
 	}
@@ -186,16 +190,19 @@ func encryptSenderKey(this js.Value, args []js.Value) interface{} {
 	senderId, senderDeviceId := args[3].String(), args[4].Int()
 	address := protocol.NewSignalAddress(senderId, uint32(senderDeviceId))
 	senderKeyName := protocol.NewSenderKeyName(groupId, address)
+
 	serializer := serialize.NewProtoBufSerializer()
 	senderKeyStore := NewMixinSenderKeyStore(serializer)
 	builder := groups.NewGroupSessionBuilder(senderKeyStore, serializer)
 	senderKeyDistributionMessage, err := builder.Create(senderKeyName)
 	if err != nil {
+		fmt.Println(err)
 		return nil
 	}
 	remoteAddress := protocol.NewSignalAddress(recipientId, uint32(recipientDeviceId))
 	ciphertextMessage, err := encryptSession(senderKeyDistributionMessage.Serialize(), remoteAddress)
 	if err != nil {
+		fmt.Println(err)
 		return nil
 	}
 	return encodeMessageData(ciphertextMessage.Type(), ciphertextMessage.Serialize(), "")
@@ -208,6 +215,7 @@ func encryptSession(plaintext []byte, remoteAddress *protocol.SignalAddress) (pr
 	cipher := session.NewCipher(buidler, remoteAddress)
 	ciphertextMessage, err := cipher.Encrypt(plaintext)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	return ciphertextMessage, nil
@@ -216,13 +224,36 @@ func encryptSession(plaintext []byte, remoteAddress *protocol.SignalAddress) (pr
 func encodeMessageData(keyType uint32, cipher []byte, resendMessageId string) string {
 	header := []byte{byte(protocol.CurrentVersion), byte(keyType), 0, 0, 0, 0, 0, 0}
 	ciphertext := append(header, cipher...)
-	return base64.StdEncoding.EncodeToString(ciphertext)
+	result := base64.StdEncoding.EncodeToString(ciphertext)
+	return result
+}
+
+func encryptGroupMessage(this js.Value, args []js.Value) interface{} {
+	if len(args) != 4 {
+		return nil
+	}
+	groupId := args[0].String()
+	senderId, senderDeviceId := args[1].String(), args[2].Int()
+	plaintext := args[3].String()
+
+	sender := protocol.NewSignalAddress(senderId, uint32(senderDeviceId))
+	senderKeyName := protocol.NewSenderKeyName(groupId, sender)
+
+	serializer := serialize.NewProtoBufSerializer()
+	senderKeyStore := NewMixinSenderKeyStore(serializer)
+	builder := groups.NewGroupSessionBuilder(senderKeyStore, serializer)
+	groupCipher := groups.NewGroupCipher(builder, senderKeyName, senderKeyStore)
+	cipherMessage, err := groupCipher.Encrypt([]byte(plaintext))
+	if err != nil {
+		return nil
+	}
+	return encodeMessageData(cipherMessage.Type(), cipherMessage.Serialize(), "")
 }
 
 func registerCallbacks() {
 	js.Global().Set("generateIdentityKeyPaireFromGo", js.FuncOf(generateIdentityKeyPair))
 	js.Global().Set("generateKeyPairFromGo", js.FuncOf(generateKeyPair))
-	js.Global().Set("gbenerateSignedPreKeyFromGo", js.FuncOf(generateSignedPreKey))
+	js.Global().Set("generateSignedPreKeyFromGo", js.FuncOf(generateSignedPreKey))
 	js.Global().Set("generatePreKeysFromGo", js.FuncOf(generatePreKeys))
 	js.Global().Set("generateRegIdFromGo", js.FuncOf(generateRegId))
 	js.Global().Set("createKeyPairFromGo", js.FuncOf(createKeyPair))
@@ -230,6 +261,7 @@ func registerCallbacks() {
 	js.Global().Set("containsSessionFromGo", js.FuncOf(containsSession))
 	js.Global().Set("processSessionFromGo", js.FuncOf(processSession))
 	js.Global().Set("encryptSenderKeyFromGo", js.FuncOf(encryptSenderKey))
+	js.Global().Set("encryptGroupMessageFromGo", js.FuncOf(encryptGroupMessage))
 
 	js.Global().Set("test", js.FuncOf(test))
 }
