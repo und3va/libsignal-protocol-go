@@ -229,10 +229,14 @@ func (i *MixinSenderKeyStore) StoreSenderKey(senderKeyName *protocol.SenderKeyNa
 func (i *MixinSenderKeyStore) LoadSenderKey(senderKeyName *protocol.SenderKeyName) *groupRecord.SenderKey {
 	result := js.Global().Get("signalDao").Call("getSenderKey", senderKeyName.GroupID(), senderKeyName.Sender().String())
 	if result == js.Undefined() {
-		return nil
+		return groupRecord.NewSenderKey(i.serializer, i.stateSerializer)
 	}
-	recordBytes, _ := hex.DecodeString(result.String())
-	senderKey, err := groupRecord.NewSenderKeyFromBytes(recordBytes, i.serializer, i.stateSerializer)
+	recordResult := result.Get("record")
+	serialized, err := hex.DecodeString(recordResult.String())
+	if err != nil {
+		fmt.Println(err)
+	}
+	senderKey, err := groupRecord.NewSenderKeyFromBytes(serialized, i.serializer, i.stateSerializer)
 	if err != nil {
 		return nil
 	}
