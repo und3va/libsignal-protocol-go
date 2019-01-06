@@ -250,6 +250,17 @@ func encryptGroupMessage(this js.Value, args []js.Value) interface{} {
 	return encodeMessageData(cipherMessage.Type(), cipherMessage.Serialize(), "")
 }
 
+func isExistSenderKey(this js.Value, args []js.Value) interface{} {
+	groupId := args[0].String()
+	senderId, senderDeviceId := args[1].String(), args[2].Int()
+	sender := protocol.NewSignalAddress(senderId, uint32(senderDeviceId))
+	senderKeyName := protocol.NewSenderKeyName(groupId, sender)
+	serializer := serialize.NewProtoBufSerializer()
+	senderKeyStore := NewMixinSenderKeyStore(serializer)
+	senderKey := senderKeyStore.LoadSenderKey(senderKeyName)
+	return !senderKey.IsEmpty()
+}
+
 func registerCallbacks() {
 	js.Global().Set("generateIdentityKeyPaireFromGo", js.FuncOf(generateIdentityKeyPair))
 	js.Global().Set("generateKeyPairFromGo", js.FuncOf(generateKeyPair))
@@ -262,6 +273,7 @@ func registerCallbacks() {
 	js.Global().Set("processSessionFromGo", js.FuncOf(processSession))
 	js.Global().Set("encryptSenderKeyFromGo", js.FuncOf(encryptSenderKey))
 	js.Global().Set("encryptGroupMessageFromGo", js.FuncOf(encryptGroupMessage))
+	js.Global().Set("isExistSenderKeyFromGo", js.FuncOf(isExistSenderKey))
 
 	js.Global().Set("test", js.FuncOf(test))
 }
