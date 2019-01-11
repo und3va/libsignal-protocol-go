@@ -9,6 +9,7 @@ import (
 	"github.com/RadicalApp/libsignal-protocol-go/ecc"
 	groupRecord "github.com/RadicalApp/libsignal-protocol-go/groups/state/record"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/identity"
+	"github.com/RadicalApp/libsignal-protocol-go/logger"
 	"github.com/RadicalApp/libsignal-protocol-go/protocol"
 	"github.com/RadicalApp/libsignal-protocol-go/serialize"
 	"github.com/RadicalApp/libsignal-protocol-go/state/record"
@@ -72,7 +73,7 @@ func (i *MixinPreKeyStore) LoadPreKey(preKeyID uint32) *record.PreKey {
 	if result == js.Undefined() {
 		return nil
 	}
-	recordBytes, _ := hex.DecodeString(result.String())
+	recordBytes := []byte(result.Get("record").String())
 	preKey, err := record.NewPreKeyFromBytes(recordBytes, i.serializer.PreKeyRecord)
 	if err != nil {
 		return nil
@@ -133,7 +134,9 @@ func (i *MixinSessionStore) GetSubDeviceSessions(name string) []uint32 {
 }
 
 func (i *MixinSessionStore) StoreSession(remoteAddress *protocol.SignalAddress, record *record.Session) {
+	fmt.Println("------fuck-")
 	rec := hex.EncodeToString(record.Serialize())
+	fmt.Println(rec)
 	js.Global().Get("signalDao").Call("saveSession", remoteAddress.Name(), remoteAddress.DeviceID(), rec)
 }
 
@@ -166,11 +169,13 @@ type MixinSignedPreKeyStore struct {
 
 func (i *MixinSignedPreKeyStore) LoadSignedPreKey(signedPreKeyID uint32) *record.SignedPreKey {
 	result := js.Global().Get("signalDao").Call("getSignedPreKey", signedPreKeyID)
+	logger.Debug("Load Signed PreKey result: ", result)
 	if result == js.Undefined() {
 		return nil
 	}
-	recordBytes, _ := hex.DecodeString(result.String())
-	signedPreKey, err := record.NewSignedPreKeyFromBytes(recordBytes, i.serializer.SignedPreKeyRecord)
+	recordResult := result.Get("record")
+	serialized := []byte(recordResult.String())
+	signedPreKey, err := record.NewSignedPreKeyFromBytes(serialized, i.serializer.SignedPreKeyRecord)
 	if err != nil {
 		return nil
 	}
