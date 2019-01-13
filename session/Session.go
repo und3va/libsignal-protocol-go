@@ -3,6 +3,7 @@ package session
 
 import (
 	"errors"
+
 	"github.com/RadicalApp/libsignal-protocol-go/ecc"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/prekey"
 	"github.com/RadicalApp/libsignal-protocol-go/logger"
@@ -79,10 +80,7 @@ type Builder struct {
 
 // Process builds a new session from a session record and pre
 // key signal message.
-func (b *Builder) Process(message *protocol.PreKeySignalMessage) (unsignedPreKeyID *optional.Uint32, err error) {
-
-	// Load or create session record for this session.
-	sessionRecord := b.sessionStore.LoadSession(b.remoteAddress)
+func (b *Builder) Process(sessionRecord *record.Session, message *protocol.PreKeySignalMessage) (unsignedPreKeyID *optional.Uint32, err error) {
 
 	// Check to see if the keys are trusted.
 	theirIdentityKey := message.IdentityKey()

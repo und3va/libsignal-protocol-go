@@ -30,8 +30,10 @@ func (i *MixinIdentityKeyStore) GetIdentityKeyPair() *identity.KeyPair {
 	private, _ := base64.StdEncoding.DecodeString(result.Get("private_key").String())
 
 	privateKey := ecc.NewDjbECPrivateKey(bytehelper.SliceToArray(private))
-	publicKey := identity.NewKeyFromBytes(bytehelper.SliceToArray(public), 0)
-	identityKeyPair := identity.NewKeyPair(&publicKey, privateKey)
+
+	publicKeyable, _ := ecc.DecodePoint(public, 0)
+	publicKey := identity.NewKey(publicKeyable)
+	identityKeyPair := identity.NewKeyPair(publicKey, privateKey)
 	return identityKeyPair
 }
 

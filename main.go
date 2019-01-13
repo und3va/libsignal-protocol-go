@@ -300,12 +300,8 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 			if err != nil {
 				fmt.Println(err)
 			}
-			unsignedPreKeyID, err := builder.Process(receivedMessage)
-			if err != nil {
-			}
-			fmt.Println(unsignedPreKeyID)
 			sessionCipher := session.NewCipher(builder, senderAddress)
-			plaintext, err := sessionCipher.Decrypt(receivedMessage.WhisperMessage())
+			plaintext, err := sessionCipher.DecryptMessage(receivedMessage)
 			if err != nil {
 				fmt.Println(err)
 			}
