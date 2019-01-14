@@ -306,7 +306,8 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 				fmt.Println(err)
 			}
 			fmt.Println(plaintext)
-			return plaintext
+			processGroupSession(groupId, senderAddress, plaintext)
+			return nil
 		} else if dataType == protocol.WHISPER_TYPE {
 			encryptedMessage, err := protocol.NewSignalMessageFromBytes(rawData, serializer.SignalMessage)
 			if err != nil {
@@ -319,7 +320,8 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 				fmt.Println(err)
 			}
 			fmt.Println(plaintext)
-			return plaintext
+			processGroupSession(groupId, senderAddress, plaintext)
+			return nil
 		}
 	} else {
 		if dataType == protocol.PREKEY_TYPE {
@@ -329,9 +331,22 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 			if err != nil {
 				return nil
 			}
-			return plaintext
+			return string(plaintext)
 		}
 	}
+	return nil
+}
+
+func processGroupSession(groupId string, address *protocol.SignalAddress, msg []byte) error {
+	serializer := serialize.NewProtoBufSerializer()
+	senderKeyStore := NewMixinSenderKeyStore(serializer)
+	skdm, err := protocol.NewSenderKeyDistributionMessageFromBytes(msg, serializer.SenderKeyDistributionMessage)
+	if err != nil {
+		return err
+	}
+	senderKeyName := protocol.NewSenderKeyName(groupId, address)
+	builder := groups.NewGroupSessionBuilder(senderKeyStore, serializer)
+	builder.Process(senderKeyName, skdm)
 	return nil
 }
 
