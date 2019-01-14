@@ -28,6 +28,7 @@ func NewCipher(builder *Builder, remoteAddress *protocol.SignalAddress) *Cipher 
 		preKeyStore:             builder.preKeyStore,
 		remoteAddress:           remoteAddress,
 		builder:                 builder,
+		identityKeyStore:        builder.identityKeyStore,
 	}
 
 	return cipher
@@ -58,6 +59,7 @@ type Cipher struct {
 	preKeyStore             store.PreKey
 	remoteAddress           *protocol.SignalAddress
 	builder                 *Builder
+	identityKeyStore        store.IdentityKey
 }
 
 // Encrypt will take the given message in bytes and return an object that follows
@@ -119,8 +121,11 @@ func (d *Cipher) Encrypt(plaintext []byte) (protocol.CiphertextMessage, error) {
 	}
 
 	sessionState.SetSenderChainKey(chainKey.NextKey())
+	if !d.identityKeyStore.IsTrustedIdentity(d.remoteAddress, sessionState.RemoteIdentityKey()) {
+		// return err
+	}
+	d.identityKeyStore.SaveIdentity(d.remoteAddress, sessionState.RemoteIdentityKey())
 	d.sessionStore.StoreSession(d.remoteAddress, sessionRecord)
-
 	return ciphertextMessage, nil
 }
 
@@ -146,29 +151,38 @@ func (d *Cipher) DecryptAndGetKey(ciphertextMessage *protocol.SignalMessage) ([]
 		return nil, nil, err
 	}
 
+	if !d.identityKeyStore.IsTrustedIdentity(d.remoteAddress, sessionRecord.SessionState().RemoteIdentityKey()) {
+		// return err
+	}
+	d.identityKeyStore.SaveIdentity(d.remoteAddress, sessionRecord.SessionState().RemoteIdentityKey())
+
 	// Store the session record in our session store.
 	d.sessionStore.StoreSession(d.remoteAddress, sessionRecord)
-
 	return plaintext, messageKeys, nil
 }
 
 func (d *Cipher) DecryptMessage(ciphertextMessage *protocol.PreKeySignalMessage) ([]byte, error) {
+	plaintext, _, err := d.DecryptMessageReturnKey(ciphertextMessage)
+	return plaintext, err
+}
+
+func (d *Cipher) DecryptMessageReturnKey(ciphertextMessage *protocol.PreKeySignalMessage) ([]byte, *message.Keys, error) {
 	// Load or create session record for this session.
 	sessionRecord := d.sessionStore.LoadSession(d.remoteAddress)
 	unsignedPreKeyID, err := d.builder.Process(sessionRecord, ciphertextMessage)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	plaintext, _, err := d.DecryptWithRecord(sessionRecord, ciphertextMessage.WhisperMessage())
+	plaintext, keys, err := d.DecryptWithRecord(sessionRecord, ciphertextMessage.WhisperMessage())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	// Store the session record in our session store.
 	d.sessionStore.StoreSession(d.remoteAddress, sessionRecord)
 	if !unsignedPreKeyID.IsEmpty {
 		d.preKeyStore.RemovePreKey(unsignedPreKeyID.Value)
 	}
-	return plaintext, nil
+	return plaintext, keys, nil
 }
 
 // DecryptWithKey will decrypt the given message using the given symmetric key. This
