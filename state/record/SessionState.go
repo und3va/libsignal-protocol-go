@@ -55,8 +55,11 @@ func NewStateFromStructure(structure *StateStructure, serializer StateSerializer
 	errors.Add(err)
 	senderBaseKey, err := ecc.DecodePoint(structure.SenderBaseKey, 0)
 	errors.Add(err)
-	pendingPreKey, err := NewPendingPreKeyFromStruct(structure.PendingPreKey)
-	errors.Add(err)
+	var pendingPreKey *PendingPreKey
+	if structure.PendingPreKey != nil {
+		pendingPreKey, err = NewPendingPreKeyFromStruct(structure.PendingPreKey)
+		errors.Add(err)
+	}
 	senderChain, err := NewChainFromStructure(structure.SenderChain)
 	errors.Add(err)
 
