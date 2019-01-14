@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/RadicalApp/libsignal-protocol-go/provision"
+
 	"syscall/js"
 
 	"github.com/RadicalApp/libsignal-protocol-go/ecc"
@@ -249,7 +251,8 @@ func encryptGroupMessage(this js.Value, args []js.Value) interface{} {
 	if err != nil {
 		return nil
 	}
-	return encodeMessageData(cipherMessage.Type(), cipherMessage.Serialize(), "")
+	message := cipherMessage.(*protocol.SenderKeyMessage)
+	return encodeMessageData(message.Type(), message.SignedSerialize(), "")
 }
 
 func isExistSenderKey(this js.Value, args []js.Value) interface{} {
@@ -305,7 +308,6 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 			if err != nil {
 				fmt.Println(err)
 			}
-			fmt.Println(plaintext)
 			processGroupSession(groupId, senderAddress, plaintext)
 			return nil
 		} else if dataType == protocol.WHISPER_TYPE {
@@ -319,7 +321,6 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 			if err != nil {
 				fmt.Println(err)
 			}
-			fmt.Println(plaintext)
 			processGroupSession(groupId, senderAddress, plaintext)
 			return nil
 		}
@@ -396,6 +397,15 @@ func uuidHashCode(this js.Value, args []js.Value) interface{} {
 	return sessionIdToDeviceId(name)
 }
 
+func provisionDecrypt(this js.Value, args []js.Value) interface{} {
+	priv, content := args[0].String(), args[1].String()
+	err := provision.Decrypt(content, priv)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return nil
+}
+
 func registerCallbacks() {
 	js.Global().Set("generateIdentityKeyPaireFromGo", js.FuncOf(generateIdentityKeyPair))
 	js.Global().Set("generateKeyPairFromGo", js.FuncOf(generateKeyPair))
@@ -412,7 +422,7 @@ func registerCallbacks() {
 	js.Global().Set("decryptEncodedMessageFromGo", js.FuncOf(decryptEncodeMessage))
 	js.Global().Set("uuidHashCodeFromGo", js.FuncOf(uuidHashCode))
 
-	js.Global().Set("test", js.FuncOf(test))
+	js.Global().Set("provisionDecryptFromGo", js.FuncOf(provisionDecrypt))
 }
 
 func main() {

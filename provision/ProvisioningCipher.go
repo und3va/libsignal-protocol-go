@@ -4,7 +4,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -35,7 +34,7 @@ func verifyMAC(key, input, mac []byte) bool {
 }
 
 func Decrypt(cipherText string, privateKey string) error {
-	ourPrivateKey, _ := hex.DecodeString(privateKey)
+	ourPrivateKey, _ := base64.StdEncoding.DecodeString(privateKey)
 	envelopeDecode, err := base64.StdEncoding.DecodeString(cipherText)
 	if err != nil {
 		return err
@@ -76,7 +75,7 @@ func Decrypt(cipherText string, privateKey string) error {
 	if !verifyMAC(macKey, versionAndIvAndCiphertext, mac) {
 		return fmt.Errorf("Verify Mac failed")
 	}
-	plaintext, err := cipher.Decrypt(iv, aesKey, ciphertext)
+	plaintext, err := cipher.DecryptCbc(iv, aesKey, ciphertext)
 	if err != nil {
 		fmt.Println(err)
 	}
