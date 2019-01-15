@@ -59,8 +59,6 @@ func (j *ProtoBufSignalMessageSerializer) Serialize(signalMessage *protocol.Sign
 	if signalMessage.Mac != nil {
 		serialized = append(serialized, signalMessage.Mac...)
 	}
-	logger.Debug("SignalMessage mac: ", signalMessage.Mac)
-	logger.Debug("Serialize SignalMessage result: ", serialized)
 
 	return serialized
 }
@@ -134,9 +132,6 @@ func (j *ProtoBufPreKeySignalMessageSerializer) Deserialize(serialized []byte) (
 		return nil, err
 	}
 
-	logger.Debug("Deserialize PreKeySignalMessage result: ", sm.GetRegistrationId())
-	logger.Debug("Deserialize PreKeySignalMessage result: ", sm.GetSignedPreKeyId())
-	logger.Debug("Deserialize PreKeySignalMessage result: ", sm.GetPreKeyId())
 	preKeySignalMessage := protocol.PreKeySignalMessageStructure{
 		Version:        version,
 		RegistrationID: sm.GetRegistrationId(),

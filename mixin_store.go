@@ -136,9 +136,7 @@ func (i *MixinSessionStore) GetSubDeviceSessions(name string) []uint32 {
 }
 
 func (i *MixinSessionStore) StoreSession(remoteAddress *protocol.SignalAddress, record *record.Session) {
-	fmt.Println("------fuck-")
 	rec := hex.EncodeToString(record.Serialize())
-	fmt.Println(rec)
 	js.Global().Get("signalDao").Call("saveSession", remoteAddress.Name(), remoteAddress.DeviceID(), rec)
 }
 
