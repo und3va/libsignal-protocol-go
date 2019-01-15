@@ -175,14 +175,6 @@ func processSession(this js.Value, args []js.Value) interface{} {
 	return true
 }
 
-func test(this js.Value, args []js.Value) interface{} {
-	store := NewMixinIdentityKeyStore()
-	store.GetIdentityKeyPair()
-	id := store.GetLocalRegistrationId()
-	fmt.Println(id)
-	return nil
-}
-
 func encryptSenderKey(this js.Value, args []js.Value) interface{} {
 	if len(args) != 5 {
 		return nil
