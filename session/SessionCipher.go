@@ -35,7 +35,7 @@ func NewCipher(builder *Builder, remoteAddress *protocol.SignalAddress) *Cipher 
 }
 
 func NewCipherFromSession(remoteAddress *protocol.SignalAddress,
-	sessionStore store.Session, preKeyStore store.PreKey,
+	sessionStore store.Session, preKeyStore store.PreKey, identityKeyStore store.IdentityKey,
 	preKeyMessageSerializer protocol.PreKeySignalMessageSerializer,
 	signalMessageSerializer protocol.SignalMessageSerializer) *Cipher {
 	cipher := &Cipher{
@@ -44,6 +44,7 @@ func NewCipherFromSession(remoteAddress *protocol.SignalAddress,
 		signalMessageSerializer: signalMessageSerializer,
 		preKeyStore:             preKeyStore,
 		remoteAddress:           remoteAddress,
+		identityKeyStore:        identityKeyStore,
 	}
 
 	return cipher

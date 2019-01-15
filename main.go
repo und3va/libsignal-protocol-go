@@ -316,6 +316,7 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 				fmt.Println(err)
 			}
 			sessionCipher := session.NewCipherFromSession(senderAddress, signalProtocolStore.SessionStore, signalProtocolStore.PreKeyStore,
+				signalProtocolStore.IdentityKeyStore,
 				serializer.PreKeySignalMessage, serializer.SignalMessage)
 			plaintext, err := sessionCipher.Decrypt(encryptedMessage)
 			if err != nil {
