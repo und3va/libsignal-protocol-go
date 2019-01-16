@@ -53,8 +53,9 @@ func (j *ProtoBufSignalMessageSerializer) Serialize(signalMessage *protocol.Sign
 	}
 
 	if signalMessage.Version != 0 {
-		serialized = append([]byte(strconv.Itoa(signalMessage.Version)), message...)
+		serialized = append(serialized, []byte(strconv.Itoa(signalMessage.Version))...)
 	}
+	serialized = append(serialized, message...)
 
 	if signalMessage.Mac != nil {
 		serialized = append(serialized, signalMessage.Mac...)

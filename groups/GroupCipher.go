@@ -49,7 +49,7 @@ func (c *GroupCipher) Encrypt(plaintext []byte) (protocol.CiphertextMessage, err
 	}
 
 	// Encrypt the plaintext.
-	ciphertext, err := cipher.Encrypt(senderKey.Iv(), senderKey.CipherKey(), plaintext)
+	ciphertext, err := cipher.EncryptCbc(senderKey.Iv(), senderKey.CipherKey(), plaintext)
 	if err != nil {
 		return nil, err
 	}

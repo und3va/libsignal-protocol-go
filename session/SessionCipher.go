@@ -360,7 +360,7 @@ func decrypt(keys *message.Keys, body []byte) ([]byte, error) {
 // and return ciphertext bytes.
 func encrypt(messageKeys *message.Keys, plaintext []byte) ([]byte, error) {
 	logger.Debug("Using cipherKey: ", messageKeys.CipherKey())
-	return cipher.Encrypt(messageKeys.Iv(), messageKeys.CipherKey(), plaintext)
+	return cipher.EncryptCbc(messageKeys.Iv(), messageKeys.CipherKey(), plaintext)
 }
 
 // Max is a uint32 implementation of math.Max
