@@ -390,9 +390,9 @@ func uuidHashCode(this js.Value, args []js.Value) interface{} {
 	return sessionIdToDeviceId(name)
 }
 
-func provisionDecrypt(this js.Value, args []js.Value) interface{} {
+func decryptProvision(this js.Value, args []js.Value) interface{} {
 	priv, content := args[0].String(), args[1].String()
-	err := provision.Decrypt(content, priv)
+	err := provision.Decrypt(priv, content)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -415,7 +415,7 @@ func registerCallbacks() {
 	js.Global().Set("decryptEncodedMessageFromGo", js.FuncOf(decryptEncodeMessage))
 	js.Global().Set("uuidHashCodeFromGo", js.FuncOf(uuidHashCode))
 
-	js.Global().Set("provisionDecryptFromGo", js.FuncOf(provisionDecrypt))
+	js.Global().Set("decryptProvisionFromGo", js.FuncOf(decryptProvision))
 }
 
 func main() {
