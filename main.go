@@ -392,11 +392,11 @@ func uuidHashCode(this js.Value, args []js.Value) interface{} {
 
 func decryptProvision(this js.Value, args []js.Value) interface{} {
 	priv, content := args[0].String(), args[1].String()
-	err := provision.Decrypt(priv, content)
+	plaintext, err := provision.Decrypt(priv, content)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
-	return nil
+	return plaintext
 }
 
 func registerCallbacks() {

@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/RadicalApp/libsignal-protocol-go/cipher"
+	"github.com/RadicalApp/libsignal-protocol-go/ecc"
 
 	"github.com/RadicalApp/libsignal-protocol-go/kdf"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/root"
@@ -33,24 +34,26 @@ func verifyMAC(key, input, mac []byte) bool {
 	return hmac.Equal(m.Sum(nil), mac)
 }
 
-func Decrypt(privateKey string, content string) error {
+func Decrypt(privateKey string, content string) (string, error) {
 	ourPrivateKey, err := base64.StdEncoding.DecodeString(privateKey)
 	if err != nil {
-		return err
+		return "", err
 	}
 	envelopeDecode, err := base64.StdEncoding.DecodeString(content)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	var envelope ProvisionEnvelope
 	if err := json.Unmarshal(envelopeDecode, &envelope); err != nil {
-		return err
+		return "", err
 	}
-	masterEphemeral := bytehelper.SliceToArray(envelope.PublicKey)
+
+	publicKeyable, _ := ecc.DecodePoint(envelope.PublicKey, 0)
+	masterEphemeral := publicKeyable.PublicKey()
 	message := envelope.Body
 	if message[0] != 1 {
-		return fmt.Errorf("Bad version number on ProvisioningMessage %s", err.Error())
+		return "", fmt.Errorf("Bad version number on ProvisioningMessage %s", err.Error())
 	}
 
 	iv := message[1 : 16+1]
@@ -58,30 +61,21 @@ func Decrypt(privateKey string, content string) error {
 	ivAndCiphertext := message[0 : len(message)-32]
 	cipherText := message[16+1 : len(message)-32]
 
-	var keyMaterial []byte
 	sharedSecret := kdf.CalculateSharedSecret(masterEphemeral, bytehelper.SliceToArray(ourPrivateKey))
-	copy(keyMaterial[:], sharedSecret[:])
-
-	derivedSecretBytes, err := kdf.DeriveSecrets(keyMaterial, nil, []byte("Mixin Provisioning Message"), root.DerivedSecretsSize)
+	derivedSecretBytes, err := kdf.DeriveSecrets(sharedSecret[:], nil, []byte("Mixin Provisioning Message"), root.DerivedSecretsSize)
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return "", err
 	}
 	aesKey := derivedSecretBytes[:32]
 	macKey := derivedSecretBytes[32:]
 
 	if !verifyMAC(macKey, ivAndCiphertext, mac) {
-		return fmt.Errorf("Verify Mac failed")
+		return "", fmt.Errorf("Verify Mac failed")
 	}
 	plaintext, err := cipher.DecryptCbc(iv, aesKey, cipherText)
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
-	fmt.Println(string(plaintext))
-	var provisionMessage ProvisionMessage
-	if err := json.Unmarshal(plaintext, &provisionMessage); err != nil {
-		return err
-	}
-	fmt.Println(provisionMessage.UserId)
-	return nil
+	return string(plaintext), nil
 }
