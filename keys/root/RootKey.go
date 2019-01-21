@@ -13,7 +13,7 @@ import (
 const DerivedSecretsSize = 64
 
 // KdfInfo is used as the info for message keys to derive secrets using a Key Derivation Function
-const KdfInfo string = "WhisperText"
+const KdfInfo string = "WhisperRatchet"
 
 // NewKey returns a new RootKey given the key derivation function and bytes.
 func NewKey(kdf kdf.HKDF, key []byte) *Key {

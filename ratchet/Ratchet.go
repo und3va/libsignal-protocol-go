@@ -75,7 +75,7 @@ func CalculateSenderSession(parameters *SenderParameters) (*session.KeyPair, err
 	}
 
 	// Derive the root and chain keys based on the master secret.
-	derivedKeysBytes, err := kdf.DeriveSecrets(masterSecret, nil, []byte(root.KdfInfo), root.DerivedSecretsSize)
+	derivedKeysBytes, err := kdf.DeriveSecrets(masterSecret, nil, []byte("WhisperText"), root.DerivedSecretsSize)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func CalculateReceiverSession(parameters *ReceiverParameters) (*session.KeyPair,
 	}
 
 	// Derive the root and chain keys based on the master secret.
-	derivedKeysBytes, err := kdf.DeriveSecrets(masterSecret, nil, []byte(root.KdfInfo), root.DerivedSecretsSize)
+	derivedKeysBytes, err := kdf.DeriveSecrets(masterSecret, nil, []byte("WhisperText"), root.DerivedSecretsSize)
 	if err != nil {
 		return nil, err
 	}
