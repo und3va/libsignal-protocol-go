@@ -168,8 +168,6 @@ func (b *Builder) processV3(sessionRecord *record.Session,
 
 	// Remove the PreKey from our store and return the message prekey id if it is valid.
 	if message.PreKeyID() != nil && message.PreKeyID().Value != medium.MaxValue {
-		logger.Debug("Removing preKey from our prekey store: ", message.PreKeyID().Value)
-		b.preKeyStore.RemovePreKey(message.PreKeyID().Value)
 		return message.PreKeyID(), nil
 	}
 	return nil, nil

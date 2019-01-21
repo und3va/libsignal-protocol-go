@@ -34,6 +34,10 @@ func highBitsToInt(value byte) int {
 	return int((value & 0xFF) >> 4)
 }
 
+func intsToByteHighAndLow(highValue, lowValue int) byte {
+	return byte((highValue<<4 | lowValue) & 0xFF)
+}
+
 // ProtoBufSignalMessageSerializer is a structure for serializing signal messages into
 // and from ProtoBuf.
 type ProtoBufSignalMessageSerializer struct{}

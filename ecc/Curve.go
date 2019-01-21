@@ -50,7 +50,7 @@ func CreateKeyPair(privateKey []byte) *ECKeyPair {
 
 // GenerateKeyPair returns an EC Key Pair.
 func GenerateKeyPair() (*ECKeyPair, error) {
-	logger.Debug("Generating EC Key Pair...")
+	// logger.Debug("Generating EC Key Pair...")
 	// Get cryptographically secure random numbers.
 	random := rand.Reader
 
@@ -75,7 +75,7 @@ func GenerateKeyPair() (*ECKeyPair, error) {
 	djbECPriv := NewDjbECPrivateKey(private)
 	keypair := NewECKeyPair(djbECPub, djbECPriv)
 
-	logger.Debug("Returning keypair: ", keypair)
+	// logger.Debug("Returning keypair: ", keypair)
 
 	return keypair, nil
 }

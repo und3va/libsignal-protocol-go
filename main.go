@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/RadicalApp/libsignal-protocol-go/provision"
-
 	"syscall/js"
 
 	"github.com/RadicalApp/libsignal-protocol-go/ecc"
@@ -17,6 +15,7 @@ import (
 	"github.com/RadicalApp/libsignal-protocol-go/keys/identity"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/prekey"
 	"github.com/RadicalApp/libsignal-protocol-go/protocol"
+	"github.com/RadicalApp/libsignal-protocol-go/provision"
 	"github.com/RadicalApp/libsignal-protocol-go/serialize"
 	"github.com/RadicalApp/libsignal-protocol-go/session"
 	"github.com/RadicalApp/libsignal-protocol-go/util/bytehelper"
