@@ -262,6 +262,9 @@ func isExistSenderKey(this js.Value, args []js.Value) interface{} {
 }
 
 func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
+	if len(args) != 5 {
+		return nil
+	}
 	groupId := args[0].String()
 	senderId, senderSessionId := args[1].String(), args[2].String()
 	data := args[3].String()
@@ -305,8 +308,12 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 				logger.Error(err)
 				return nil
 			}
-			processGroupSession(groupId, senderAddress, plaintext)
-			return nil
+			err = processGroupSession(groupId, senderAddress, plaintext)
+			if err != nil {
+				logger.Error(err)
+				return nil
+			}
+			return true
 		} else if dataType == protocol.WHISPER_TYPE {
 			encryptedMessage, err := protocol.NewSignalMessageFromBytes(rawData, serializer.SignalMessage)
 			if err != nil {
@@ -321,8 +328,12 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 				logger.Error(err)
 				return nil
 			}
-			processGroupSession(groupId, senderAddress, plaintext)
-			return nil
+			err = processGroupSession(groupId, senderAddress, plaintext)
+			if err != nil {
+				logger.Error(err)
+				return nil
+			}
+			return true
 		}
 	} else {
 		if dataType == protocol.PREKEY_TYPE {
