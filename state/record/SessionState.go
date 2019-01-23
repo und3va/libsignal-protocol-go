@@ -9,7 +9,6 @@ import (
 	"github.com/RadicalApp/libsignal-protocol-go/keys/root"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/session"
 	"github.com/RadicalApp/libsignal-protocol-go/logger"
-	"github.com/RadicalApp/libsignal-protocol-go/util/bytehelper"
 	"github.com/RadicalApp/libsignal-protocol-go/util/errorhelper"
 	"github.com/RadicalApp/libsignal-protocol-go/util/optional"
 )
@@ -145,8 +144,7 @@ func (s *State) SenderBaseKey() []byte {
 
 // SetSenderBaseKey sets the sender's base key with the given bytes.
 func (s *State) SetSenderBaseKey(senderBaseKey []byte) {
-	senderBaseKeyArray := bytehelper.SliceToArray(senderBaseKey)
-	s.senderBaseKey = ecc.NewDjbECPublicKey(senderBaseKeyArray)
+	s.senderBaseKey, _ = ecc.DecodePoint(senderBaseKey, 0)
 }
 
 // Version returns the session's version.

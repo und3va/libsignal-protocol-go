@@ -294,6 +294,7 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 	serializer := serialize.NewProtoBufSerializer()
 	signalProtocolStore := NewMixinSignalProtocolStore(serializer)
 	builder := session.NewBuilderFromSignal(signalProtocolStore, senderAddress, serializer)
+	sessionCipher := session.NewCipher(builder, senderAddress)
 
 	if category == "SIGNAL_KEY" {
 		if dataType == protocol.PREKEY_TYPE {
@@ -302,7 +303,6 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 				logger.Error(err)
 				return nil
 			}
-			sessionCipher := session.NewCipher(builder, senderAddress)
 			plaintext, err := sessionCipher.DecryptMessage(receivedMessage)
 			if err != nil {
 				logger.Error(err)
@@ -320,9 +320,6 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 				logger.Error(err)
 				return nil
 			}
-			sessionCipher := session.NewCipherFromSession(senderAddress, signalProtocolStore.SessionStore, signalProtocolStore.PreKeyStore,
-				signalProtocolStore.IdentityKeyStore,
-				serializer.PreKeySignalMessage, serializer.SignalMessage)
 			plaintext, err := sessionCipher.Decrypt(encryptedMessage)
 			if err != nil {
 				logger.Error(err)
@@ -337,7 +334,29 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 		}
 	} else {
 		if dataType == protocol.PREKEY_TYPE {
+			receivedMessage, err := protocol.NewPreKeySignalMessageFromBytes(rawData, serializer.PreKeySignalMessage, serializer.SignalMessage)
+			if err != nil {
+				logger.Error(err)
+				return nil
+			}
+			plaintext, err := sessionCipher.DecryptMessage(receivedMessage)
+			if err != nil {
+				logger.Error(err)
+				return nil
+			}
+			return string(plaintext)
 		} else if dataType == protocol.WHISPER_TYPE {
+			encryptedMessage, err := protocol.NewSignalMessageFromBytes(rawData, serializer.SignalMessage)
+			if err != nil {
+				logger.Error(err)
+				return nil
+			}
+			plaintext, err := sessionCipher.Decrypt(encryptedMessage)
+			if err != nil {
+				logger.Error(err)
+				return nil
+			}
+			return string(plaintext)
 		} else if dataType == protocol.SENDERKEY_TYPE {
 			plaintext, err := decryptGroupMessage(groupId, senderAddress, rawData)
 			if err != nil {

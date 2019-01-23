@@ -108,7 +108,6 @@ func (b *Builder) processV3(sessionRecord *record.Session,
 	message *protocol.PreKeySignalMessage) (unsignedPreKeyID *optional.Uint32, err error) {
 
 	logger.Debug("Processing message with PreKeyID: ", message.PreKeyID())
-
 	// Check to see if we've already set up a session for this V3 message.
 	sessionExists := sessionRecord.HasSessionState(
 		message.MessageVersion(),
@@ -116,7 +115,7 @@ func (b *Builder) processV3(sessionRecord *record.Session,
 	)
 	if sessionExists {
 		logger.Warning("We've already setup a session for this V3 message, letting bundled message fall through...")
-		return nil, nil
+		return optional.NewEmptyUint32(), nil
 	}
 
 	// Load our signed prekey from our signed prekey store.
