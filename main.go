@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/RadicalApp/libsignal-protocol-go/groups"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/identity"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/prekey"
+	"github.com/RadicalApp/libsignal-protocol-go/logger"
 	"github.com/RadicalApp/libsignal-protocol-go/protocol"
 	"github.com/RadicalApp/libsignal-protocol-go/provision"
 	"github.com/RadicalApp/libsignal-protocol-go/serialize"
@@ -25,10 +25,9 @@ import (
 
 func generateIdentityKeyPair(this js.Value, args []js.Value) interface{} {
 	identityKeyPair, err := keyhelper.GenerateIdentityKeyPair()
-
 	if err != nil {
-		// TODO
-		fmt.Println(err.Error())
+		logger.Error(err)
+		return nil
 	}
 	publicKey := identityKeyPair.PublicKey().Serialize()
 	privateKey := identityKeyPair.PrivateKey().Serialize()
@@ -40,8 +39,8 @@ func generateIdentityKeyPair(this js.Value, args []js.Value) interface{} {
 func generateKeyPair(this js.Value, args []js.Value) interface{} {
 	keyPair, err := ecc.GenerateKeyPair()
 	if err != nil {
-		// TODO
-		fmt.Println(err.Error())
+		logger.Error(err)
+		return nil
 	}
 	public := keyPair.PublicKey().Serialize()
 	private := keyPair.PrivateKey().Serialize()
@@ -71,7 +70,7 @@ func generateRegId(this js.Value, args []js.Value) interface{} {
 
 func generateSignedPreKey(this js.Value, args []js.Value) interface{} {
 	if len(args) != 3 {
-		// TODO
+		return nil
 	}
 	pub, priv, id := args[0], args[1], args[2]
 	public, _ := base64.StdEncoding.DecodeString(pub.String())
@@ -88,13 +87,14 @@ func generateSignedPreKey(this js.Value, args []js.Value) interface{} {
 
 func generatePreKeys(this js.Value, args []js.Value) interface{} {
 	if len(args) != 2 {
-		// TODO
+		return nil
 	}
 	start, end := args[0].Int(), args[1].Int()
 	serializer := serialize.NewProtoBufSerializer()
 	preKeys, err := keyhelper.GeneratePreKeys(start, end, serializer.PreKeyRecord)
 	if err != nil {
-		fmt.Println(err.Error())
+		logger.Error(err)
+		return nil
 	}
 	var encodePreKeys []string
 	for _, preKey := range preKeys {
@@ -105,6 +105,7 @@ func generatePreKeys(this js.Value, args []js.Value) interface{} {
 
 func containsSession(this js.Value, args []js.Value) interface{} {
 	if len(args) != 2 {
+		return nil
 	}
 	name, deviceId := args[0].String(), args[1].Int()
 	serializer := serialize.NewProtoBufSerializer()
@@ -134,21 +135,25 @@ type ConsumePreKeyBundle struct {
 
 func processSession(this js.Value, args []js.Value) interface{} {
 	if len(args) != 3 {
+		return nil
 	}
 	name, deviceId, bundle := args[0].String(), args[1].Int(), args[2].String()
 
 	var preKeyBundle ConsumePreKeyBundle
 	err := json.Unmarshal([]byte(bundle), &preKeyBundle)
 	if err != nil {
-		// TODO
+		logger.Error(err)
+		return nil
 	}
 	preKeyPublic, err := ecc.DecodePoint(preKeyBundle.OnetimeKey.PubKey, 0)
 	if err != nil {
-		fmt.Println(err)
+		logger.Error(err)
+		return nil
 	}
 	signedPreKeyPublic, err := ecc.DecodePoint(preKeyBundle.Signed.PubKey, 0)
 	if err != nil {
-		fmt.Println(err)
+		logger.Error(err)
+		return nil
 	}
 	signature := bytehelper.SliceToArray64(preKeyBundle.Signed.Signature)
 	publicKeyable, _ := ecc.DecodePoint(preKeyBundle.IdentityKey, 0)
@@ -168,7 +173,7 @@ func processSession(this js.Value, args []js.Value) interface{} {
 	)
 	err = sessionBuilder.ProcessBundle(retrievedPreKey)
 	if err != nil {
-		fmt.Println(err)
+		logger.Error(err)
 		return false
 	}
 	return true
@@ -190,16 +195,15 @@ func encryptSenderKey(this js.Value, args []js.Value) interface{} {
 	builder := groups.NewGroupSessionBuilder(senderKeyStore, serializer)
 	senderKeyDistributionMessage, err := builder.Create(senderKeyName)
 	if err != nil {
-		fmt.Println(err)
+		logger.Error(err)
 		return nil
 	}
 	remoteAddress := protocol.NewSignalAddress(recipientId, uint32(recipientDeviceId))
 	ciphertextMessage, err := encryptSession(senderKeyDistributionMessage.Serialize(), remoteAddress)
 	if err != nil {
-		fmt.Println(err)
+		logger.Error(err)
 		return nil
 	}
-	fmt.Println(ciphertextMessage.Serialize())
 	return encodeMessageData(ciphertextMessage.Type(), ciphertextMessage.Serialize(), "")
 }
 
@@ -210,7 +214,7 @@ func encryptSession(plaintext []byte, remoteAddress *protocol.SignalAddress) (pr
 	sessionCipher := session.NewCipher(buidler, remoteAddress)
 	ciphertextMessage, err := sessionCipher.Encrypt(plaintext)
 	if err != nil {
-		fmt.Println(err)
+		logger.Error(err)
 		return nil, err
 	}
 	return ciphertextMessage, nil
@@ -292,26 +296,30 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 		if dataType == protocol.PREKEY_TYPE {
 			receivedMessage, err := protocol.NewPreKeySignalMessageFromBytes(rawData, serializer.PreKeySignalMessage, serializer.SignalMessage)
 			if err != nil {
-				fmt.Println(err)
+				logger.Error(err)
+				return nil
 			}
 			sessionCipher := session.NewCipher(builder, senderAddress)
 			plaintext, err := sessionCipher.DecryptMessage(receivedMessage)
 			if err != nil {
-				fmt.Println(err)
+				logger.Error(err)
+				return nil
 			}
 			processGroupSession(groupId, senderAddress, plaintext)
 			return nil
 		} else if dataType == protocol.WHISPER_TYPE {
 			encryptedMessage, err := protocol.NewSignalMessageFromBytes(rawData, serializer.SignalMessage)
 			if err != nil {
-				fmt.Println(err)
+				logger.Error(err)
+				return nil
 			}
 			sessionCipher := session.NewCipherFromSession(senderAddress, signalProtocolStore.SessionStore, signalProtocolStore.PreKeyStore,
 				signalProtocolStore.IdentityKeyStore,
 				serializer.PreKeySignalMessage, serializer.SignalMessage)
 			plaintext, err := sessionCipher.Decrypt(encryptedMessage)
 			if err != nil {
-				fmt.Println(err)
+				logger.Error(err)
+				return nil
 			}
 			processGroupSession(groupId, senderAddress, plaintext)
 			return nil
@@ -354,7 +362,7 @@ func decryptGroupMessage(groupId string, address *protocol.SignalAddress, cipher
 	encryptedMessage, err := protocol.NewSenderKeyMessageFromBytes(cipherText, serializer.SenderKeyMessage)
 	plaintext, err := groupCipher.Decrypt(encryptedMessage)
 	if err != nil {
-		fmt.Println(err)
+		logger.Error(err)
 		return nil, err
 	}
 	return plaintext, nil
@@ -393,9 +401,14 @@ func decryptProvision(this js.Value, args []js.Value) interface{} {
 	priv, content := args[0].String(), args[1].String()
 	plaintext, err := provision.Decrypt(priv, content)
 	if err != nil {
+		logger.Error(err)
 		return err
 	}
 	return plaintext
+}
+
+func decryptAttachment(this js.Value, args []js.Value) interface{} {
+	return nil
 }
 
 func registerCallbacks() {
@@ -415,6 +428,8 @@ func registerCallbacks() {
 	js.Global().Set("uuidHashCodeFromGo", js.FuncOf(uuidHashCode))
 
 	js.Global().Set("decryptProvisionFromGo", js.FuncOf(decryptProvision))
+
+	js.Global().Set("decryptAttachmentFromGo", js.FuncOf(decryptAttachment))
 }
 
 func main() {
