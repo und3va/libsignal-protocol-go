@@ -56,7 +56,8 @@ func (i *MixinIdentityKeyStore) IsTrustedIdentity(address *protocol.SignalAddres
 	if hex.EncodeToString(public) == identityKey.Fingerprint() {
 		return true
 	}
-	return false
+	// TODO
+	return true
 }
 
 // PreKeyStore
