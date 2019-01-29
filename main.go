@@ -266,10 +266,9 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 		return nil
 	}
 	groupId := args[0].String()
-	senderId, senderSessionId := args[1].String(), args[2].String()
+	senderId, senderDeviceId := args[1].String(), args[2].Int()
 	data := args[3].String()
 	category := args[4].String()
-	senderDeviceId := sessionIdToDeviceId(senderSessionId)
 	cipherText, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		return nil
