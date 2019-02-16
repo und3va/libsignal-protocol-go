@@ -207,6 +207,19 @@ func encryptSenderKey(this js.Value, args []js.Value) interface{} {
 	return encodeMessageData(ciphertextMessage.Type(), ciphertextMessage.Serialize(), "")
 }
 
+func encryptSessionMessage(this js.Value, args []js.Value) interface{} {
+	recipientId := args[0].String()
+	recipientDeviceId := args[1].Int()
+	plaintext := args[2].String()
+	remoteAddress := protocol.NewSignalAddress(recipientId, uint32(recipientDeviceId))
+	ciphertextMessage, err := encryptSession([]byte(plaintext), remoteAddress)
+	if err != nil {
+		logger.Error(err)
+		return nil
+	}
+	return encodeMessageData(ciphertextMessage.Type(), ciphertextMessage.Serialize(), "")
+}
+
 func encryptSession(plaintext []byte, remoteAddress *protocol.SignalAddress) (protocol.CiphertextMessage, error) {
 	serializer := serialize.NewProtoBufSerializer()
 	signalProtocolStore := NewMixinSignalProtocolStore(serializer)
@@ -452,6 +465,7 @@ func registerCallbacks() {
 	js.Global().Set("processSessionFromGo", js.FuncOf(processSession))
 	js.Global().Set("encryptSenderKeyFromGo", js.FuncOf(encryptSenderKey))
 	js.Global().Set("encryptGroupMessageFromGo", js.FuncOf(encryptGroupMessage))
+	js.Global().Set("encryptSessionMessageFromGo", js.FuncOf(encryptSessionMessage))
 	js.Global().Set("isExistSenderKeyFromGo", js.FuncOf(isExistSenderKey))
 	js.Global().Set("decryptEncodedMessageFromGo", js.FuncOf(decryptEncodeMessage))
 	js.Global().Set("uuidHashCodeFromGo", js.FuncOf(uuidHashCode))
