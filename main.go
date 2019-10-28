@@ -279,7 +279,7 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 		return nil
 	}
 	groupId := args[0].String()
-	senderId, senderDeviceId := args[1].String(), args[2].Int()
+	senderId, deviceId := args[1].String(), args[2].Int()
 	data := args[3].String()
 	category := args[4].String()
 	cipherText, err := base64.StdEncoding.DecodeString(data)
@@ -301,7 +301,7 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 		rawData = cipherText[8:]
 	}
 
-	senderAddress := protocol.NewSignalAddress(senderId, uint32(senderDeviceId))
+	senderAddress := protocol.NewSignalAddress(senderId, uint32(deviceId))
 
 	serializer := serialize.NewProtoBufSerializer()
 	signalProtocolStore := NewMixinSignalProtocolStore(serializer)
@@ -411,7 +411,6 @@ func decryptGroupMessage(groupId string, address *protocol.SignalAddress, cipher
 }
 
 func sessionIdToDeviceId(sessionId string) int32 {
-	// check uuid
 	components := strings.Split(sessionId, "-")
 	for i, x := range components {
 		components[i] = "0x" + x
@@ -431,6 +430,9 @@ func sessionIdToDeviceId(sessionId string) int32 {
 
 	hilo := mostSigBits ^ leastSigBits
 	result := (int32((hilo >> 32))) ^ int32(hilo)
+	if result < 0 {
+		return -result
+	}
 	return result
 }
 
