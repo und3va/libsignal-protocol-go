@@ -120,6 +120,9 @@ func (b *Builder) processV3(sessionRecord *record.Session,
 
 	// Load our signed prekey from our signed prekey store.
 	ourSignedPreKeyRecord := b.signedPreKeyStore.LoadSignedPreKey(message.SignedPreKeyID())
+	if ourSignedPreKeyRecord == nil {
+		return nil, errors.New(noSignedPreKeyError)
+	}
 	ourSignedPreKey := ourSignedPreKeyRecord.KeyPair()
 
 	// Build the parameters of the session.
