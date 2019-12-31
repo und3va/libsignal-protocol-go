@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -195,13 +196,13 @@ func encryptSenderKey(this js.Value, args []js.Value) interface{} {
 	builder := groups.NewGroupSessionBuilder(senderKeyStore, serializer)
 	senderKeyDistributionMessage, err := builder.Create(senderKeyName)
 	if err != nil {
-		logger.Error(err)
+		fmt.Println(err)
 		return nil
 	}
 	remoteAddress := protocol.NewSignalAddress(recipientId, uint32(recipientDeviceId))
 	ciphertextMessage, err := encryptSession(senderKeyDistributionMessage.Serialize(), remoteAddress)
 	if err != nil {
-		logger.Error(err)
+		fmt.Println(err)
 		return nil
 	}
 	return encodeMessageData(ciphertextMessage.Type(), ciphertextMessage.Serialize(), "")
@@ -211,13 +212,14 @@ func encryptSessionMessage(this js.Value, args []js.Value) interface{} {
 	recipientId := args[0].String()
 	recipientDeviceId := args[1].Int()
 	plaintext := args[2].String()
+	messageId := args[3].String()
 	remoteAddress := protocol.NewSignalAddress(recipientId, uint32(recipientDeviceId))
 	ciphertextMessage, err := encryptSession([]byte(plaintext), remoteAddress)
 	if err != nil {
 		logger.Error(err)
 		return nil
 	}
-	return encodeMessageData(ciphertextMessage.Type(), ciphertextMessage.Serialize(), "")
+	return encodeMessageData(ciphertextMessage.Type(), ciphertextMessage.Serialize(), messageId)
 }
 
 func encryptSession(plaintext []byte, remoteAddress *protocol.SignalAddress) (protocol.CiphertextMessage, error) {
@@ -234,10 +236,17 @@ func encryptSession(plaintext []byte, remoteAddress *protocol.SignalAddress) (pr
 }
 
 func encodeMessageData(keyType uint32, cipher []byte, resendMessageId string) string {
-	header := []byte{byte(protocol.CurrentVersion), byte(keyType), 0, 0, 0, 0, 0, 0}
-	ciphertext := append(header, cipher...)
-	result := base64.StdEncoding.EncodeToString(ciphertext)
-	return result
+	if resendMessageId == "" {
+		header := []byte{byte(protocol.CurrentVersion), byte(keyType), 0, 0, 0, 0, 0, 0}
+		ciphertext := append(header, cipher...)
+		return base64.StdEncoding.EncodeToString(ciphertext)
+	} else {
+		header := []byte{byte(protocol.CurrentVersion), byte(keyType), 1, 0, 0, 0, 0, 0}
+		header = append(header, []byte(resendMessageId)...)
+		ciphertext := append(header, cipher...)
+		result := base64.StdEncoding.EncodeToString(ciphertext)
+		return result
+	}
 }
 
 func encryptGroupMessage(this js.Value, args []js.Value) interface{} {
@@ -257,6 +266,7 @@ func encryptGroupMessage(this js.Value, args []js.Value) interface{} {
 	groupCipher := groups.NewGroupCipher(builder, senderKeyName, senderKeyStore)
 	cipherMessage, err := groupCipher.Encrypt([]byte(plaintext))
 	if err != nil {
+		fmt.Println(err)
 		return nil
 	}
 	message := cipherMessage.(*protocol.SenderKeyMessage)
@@ -404,7 +414,7 @@ func decryptGroupMessage(groupId string, address *protocol.SignalAddress, cipher
 	encryptedMessage, err := protocol.NewSenderKeyMessageFromBytes(cipherText, serializer.SenderKeyMessage)
 	plaintext, err := groupCipher.Decrypt(encryptedMessage)
 	if err != nil {
-		logger.Error(err)
+		fmt.Println(err)
 		return nil, err
 	}
 	return plaintext, nil

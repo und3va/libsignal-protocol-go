@@ -15,8 +15,9 @@ type defaultLogger struct {
 // caller is allowed to log.
 func (d *defaultLogger) log(level, caller, msg string) {
 	if !d.shouldLog(caller) {
-		return
+		// return
 	}
+	fmt.Println(msg)
 	t := time.Now()
 	fmt.Println(
 		"["+level+"]",
