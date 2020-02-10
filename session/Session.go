@@ -3,6 +3,7 @@ package session
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/RadicalApp/libsignal-protocol-go/ecc"
 	"github.com/RadicalApp/libsignal-protocol-go/keys/prekey"
@@ -121,7 +122,7 @@ func (b *Builder) processV3(sessionRecord *record.Session,
 	// Load our signed prekey from our signed prekey store.
 	ourSignedPreKeyRecord := b.signedPreKeyStore.LoadSignedPreKey(message.SignedPreKeyID())
 	if ourSignedPreKeyRecord == nil {
-		return nil, errors.New(noSignedPreKeyError)
+		return nil, fmt.Errorf("%s %d", noSignedPreKeyError, message.SignedPreKeyID())
 	}
 	ourSignedPreKey := ourSignedPreKeyRecord.KeyPair()
 
