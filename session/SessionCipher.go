@@ -296,7 +296,7 @@ func getOrCreateMessageKeys(sessionState *record.State, theirEphemeral ecc.ECPub
 	}
 
 	if counter-chainKey.Index() > maxFutureMessages {
-		return nil, errors.New("Too many messages into the future!")
+		return nil, errors.New("Over 5000 messages into the future!")
 	}
 
 	for chainKey.Index() < counter {
