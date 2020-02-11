@@ -2,8 +2,12 @@ package record
 
 import (
 	"errors"
+	"fmt"
+
 	"github.com/RadicalApp/libsignal-protocol-go/ecc"
 )
+
+const maxStates = 5
 
 // SenderKeySerializer is an interface for serializing and deserializing
 // SenderKey objects into bytes. An implementation of this interface should be
@@ -81,7 +85,7 @@ func (k *SenderKey) SenderKeyState() (*SenderKeyState, error) {
 	if len(k.senderKeyStates) > 0 {
 		return k.senderKeyStates[0], nil
 	}
-	return nil, errors.New("No Sender Keys")
+	return nil, errors.New("No Sender Keys State in Record")
 }
 
 // GetSenderKeyStateByID will return the sender key state with the given
@@ -93,7 +97,7 @@ func (k *SenderKey) GetSenderKeyStateByID(keyID uint32) (*SenderKeyState, error)
 		}
 	}
 
-	return nil, errors.New("No sender key for for ID")
+	return nil, fmt.Errorf("No sender key for for ID: %d", keyID)
 }
 
 // IsEmpty will return false if there is more than one state in this
@@ -108,10 +112,10 @@ func (k *SenderKey) AddSenderKeyState(id uint32, iteration uint32,
 	chainKey []byte, signatureKey ecc.ECPublicKeyable) {
 
 	newState := NewSenderKeyStateFromPublicKey(id, iteration, chainKey, signatureKey, k.stateSerializer)
-	k.senderKeyStates = append(k.senderKeyStates, newState)
+	k.senderKeyStates = append([]*SenderKeyState{newState}, k.senderKeyStates...)
 
-	if len(k.senderKeyStates) > maxMessageKeys {
-		k.senderKeyStates = k.senderKeyStates[1:]
+	if len(k.senderKeyStates) > maxStates {
+		k.senderKeyStates = k.senderKeyStates[:len(k.senderKeyStates)-1]
 	}
 }
 
@@ -121,7 +125,7 @@ func (k *SenderKey) SetSenderKeyState(id uint32, iteration uint32,
 	chainKey []byte, signatureKey *ecc.ECKeyPair) {
 
 	newState := NewSenderKeyState(id, iteration, chainKey, signatureKey, k.stateSerializer)
-	k.senderKeyStates = make([]*SenderKeyState, 0, maxMessageKeys/2)
+	k.senderKeyStates = make([]*SenderKeyState, 0, maxStates/2)
 	k.senderKeyStates = append(k.senderKeyStates, newState)
 }
 
