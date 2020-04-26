@@ -15,7 +15,7 @@ import (
 	"github.com/RadicalApp/libsignal-protocol-go/util/bytehelper"
 )
 
-const maxFutureMessages = 5000
+const maxFutureMessages = 2000
 
 // NewCipher constructs a session cipher for encrypt/decrypt operations on a
 // session. In order to use the session cipher, a session must have already
@@ -296,7 +296,7 @@ func getOrCreateMessageKeys(sessionState *record.State, theirEphemeral ecc.ECPub
 	}
 
 	if counter-chainKey.Index() > maxFutureMessages {
-		return nil, errors.New("Over 5000 messages into the future!")
+		return nil, errors.New("Over 2000 messages into the future!")
 	}
 
 	for chainKey.Index() < counter {
