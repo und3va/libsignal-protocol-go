@@ -24,6 +24,8 @@ import (
 	"github.com/RadicalApp/libsignal-protocol-go/util/optional"
 )
 
+var serializer = serialize.NewProtoBufSerializer()
+
 func generateIdentityKeyPair(this js.Value, args []js.Value) interface{} {
 	identityKeyPair, err := keyhelper.GenerateIdentityKeyPair()
 	if err != nil {
@@ -81,7 +83,6 @@ func generateSignedPreKey(this js.Value, args []js.Value) interface{} {
 	publicKey := identity.NewKey(publicKeyable)
 	privateKey := ecc.NewDjbECPrivateKey(bytehelper.SliceToArray(private))
 	identityKeyPair := identity.NewKeyPair(publicKey, privateKey)
-	serializer := serialize.NewProtoBufSerializer()
 	signedPeKey, _ := keyhelper.GenerateSignedPreKey(identityKeyPair, uint32(id.Int()), serializer.SignedPreKeyRecord)
 	return string(signedPeKey.Serialize())
 }
@@ -91,7 +92,6 @@ func generatePreKeys(this js.Value, args []js.Value) interface{} {
 		return nil
 	}
 	start, end := args[0].Int(), args[1].Int()
-	serializer := serialize.NewProtoBufSerializer()
 	preKeys, err := keyhelper.GeneratePreKeys(start, end, serializer.PreKeyRecord)
 	if err != nil {
 		logger.Error(err)
@@ -109,7 +109,6 @@ func containsSession(this js.Value, args []js.Value) interface{} {
 		return nil
 	}
 	name, deviceId := args[0].String(), args[1].Int()
-	serializer := serialize.NewProtoBufSerializer()
 	sessionStore := NewMixinSessionStore(serializer)
 	result := sessionStore.ContainsSession(protocol.NewSignalAddress(name, uint32(deviceId)))
 	return result
@@ -164,7 +163,6 @@ func processSession(this js.Value, args []js.Value) interface{} {
 		optional.NewOptionalUint32(uint32(preKeyBundle.OnetimeKey.KeyId)), uint32(preKeyBundle.Signed.KeyId),
 		preKeyPublic, signedPreKeyPublic, signature, identityKey)
 
-	serializer := serialize.NewProtoBufSerializer()
 	signalProtocolStore := NewMixinSignalProtocolStore(serializer)
 	remoteAddress := protocol.NewSignalAddress(name, uint32(deviceId))
 	sessionBuilder := session.NewBuilderFromSignal(
@@ -191,7 +189,6 @@ func encryptSenderKey(this js.Value, args []js.Value) interface{} {
 	address := protocol.NewSignalAddress(senderId, uint32(senderDeviceId))
 	senderKeyName := protocol.NewSenderKeyName(groupId, address)
 
-	serializer := serialize.NewProtoBufSerializer()
 	senderKeyStore := NewMixinSenderKeyStore(serializer)
 	builder := groups.NewGroupSessionBuilder(senderKeyStore, serializer)
 	senderKeyDistributionMessage, err := builder.Create(senderKeyName)
@@ -223,7 +220,6 @@ func encryptSessionMessage(this js.Value, args []js.Value) interface{} {
 }
 
 func encryptSession(plaintext []byte, remoteAddress *protocol.SignalAddress) (protocol.CiphertextMessage, error) {
-	serializer := serialize.NewProtoBufSerializer()
 	signalProtocolStore := NewMixinSignalProtocolStore(serializer)
 	buidler := session.NewBuilderFromSignal(signalProtocolStore, remoteAddress, serializer)
 	sessionCipher := session.NewCipher(buidler, remoteAddress)
@@ -260,7 +256,6 @@ func encryptGroupMessage(this js.Value, args []js.Value) interface{} {
 	sender := protocol.NewSignalAddress(senderId, uint32(senderDeviceId))
 	senderKeyName := protocol.NewSenderKeyName(groupId, sender)
 
-	serializer := serialize.NewProtoBufSerializer()
 	senderKeyStore := NewMixinSenderKeyStore(serializer)
 	builder := groups.NewGroupSessionBuilder(senderKeyStore, serializer)
 	groupCipher := groups.NewGroupCipher(builder, senderKeyName, senderKeyStore)
@@ -278,7 +273,6 @@ func isExistSenderKey(this js.Value, args []js.Value) interface{} {
 	senderId, senderDeviceId := args[1].String(), args[2].Int()
 	sender := protocol.NewSignalAddress(senderId, uint32(senderDeviceId))
 	senderKeyName := protocol.NewSenderKeyName(groupId, sender)
-	serializer := serialize.NewProtoBufSerializer()
 	senderKeyStore := NewMixinSenderKeyStore(serializer)
 	senderKey := senderKeyStore.LoadSenderKey(senderKeyName)
 	return !senderKey.IsEmpty()
@@ -313,7 +307,6 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 
 	senderAddress := protocol.NewSignalAddress(senderId, uint32(deviceId))
 
-	serializer := serialize.NewProtoBufSerializer()
 	signalProtocolStore := NewMixinSignalProtocolStore(serializer)
 	builder := session.NewBuilderFromSignal(signalProtocolStore, senderAddress, serializer)
 	sessionCipher := session.NewCipher(builder, senderAddress)
@@ -391,7 +384,6 @@ func decryptEncodeMessage(this js.Value, args []js.Value) interface{} {
 }
 
 func processGroupSession(groupId string, address *protocol.SignalAddress, msg []byte) error {
-	serializer := serialize.NewProtoBufSerializer()
 	senderKeyStore := NewMixinSenderKeyStore(serializer)
 	skdm, err := protocol.NewSenderKeyDistributionMessageFromBytes(msg, serializer.SenderKeyDistributionMessage)
 	if err != nil {
@@ -406,7 +398,6 @@ func processGroupSession(groupId string, address *protocol.SignalAddress, msg []
 func decryptGroupMessage(groupId string, address *protocol.SignalAddress, cipherText []byte) ([]byte, error) {
 	senderKeyName := protocol.NewSenderKeyName(groupId, address)
 
-	serializer := serialize.NewProtoBufSerializer()
 	senderKeyStore := NewMixinSenderKeyStore(serializer)
 	builder := groups.NewGroupSessionBuilder(senderKeyStore, serializer)
 	groupCipher := groups.NewGroupCipher(builder, senderKeyName, senderKeyStore)
