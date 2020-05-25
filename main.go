@@ -121,8 +121,8 @@ type ConsumeSignedPreKey struct {
 }
 
 type ConsumeOneTimeKey struct {
-	KeyId  int    `json:"key_id"`
-	PubKey []byte `json:"pub_key"`
+	KeyId  int    `json:"key_id,omitempty"`
+	PubKey []byte `json:"pub_key,omitempty"`
 }
 
 type ConsumePreKeyBundle struct {
@@ -145,11 +145,11 @@ func processSession(this js.Value, args []js.Value) interface{} {
 		logger.Error(err)
 		return nil
 	}
-	preKeyPublic, err := ecc.DecodePoint(preKeyBundle.OnetimeKey.PubKey, 0)
-	if err != nil {
-		logger.Error(err)
-		return nil
+	var preKeyPublic ecc.ECPublicKeyable
+	if preKeyBundle.OnetimeKey.PubKey != nil && len(preKeyBundle.OnetimeKey.PubKey) > 0 {
+		preKeyPublic, _ = ecc.DecodePoint(preKeyBundle.OnetimeKey.PubKey, 0)
 	}
+	oneTimeKeyId := optional.NewOptionalUint32(uint32(preKeyBundle.OnetimeKey.KeyId))
 	signedPreKeyPublic, err := ecc.DecodePoint(preKeyBundle.Signed.PubKey, 0)
 	if err != nil {
 		logger.Error(err)
@@ -160,7 +160,7 @@ func processSession(this js.Value, args []js.Value) interface{} {
 	identityKey := identity.NewKey(publicKeyable)
 
 	retrievedPreKey := prekey.NewBundle(uint32(preKeyBundle.RegistrationId), uint32(deviceId),
-		optional.NewOptionalUint32(uint32(preKeyBundle.OnetimeKey.KeyId)), uint32(preKeyBundle.Signed.KeyId),
+		oneTimeKeyId, uint32(preKeyBundle.Signed.KeyId),
 		preKeyPublic, signedPreKeyPublic, signature, identityKey)
 
 	signalProtocolStore := NewMixinSignalProtocolStore(serializer)
