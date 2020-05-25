@@ -136,7 +136,7 @@ func (b *Builder) processV3(sessionRecord *record.Session,
 
 	// Set our one time pre key with the one from our prekey store
 	// if the message contains a valid pre key id
-	if message.PreKeyID() != nil {
+	if !message.PreKeyID().IsEmpty {
 		oneTimePreKey := b.preKeyStore.LoadPreKey(message.PreKeyID().Value)
 		if oneTimePreKey == nil {
 			logger.Error(nilOneTimePreKeyError)

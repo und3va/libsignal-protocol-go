@@ -137,6 +137,11 @@ func (j *ProtoBufPreKeySignalMessageSerializer) Deserialize(serialized []byte) (
 		return nil, err
 	}
 
+	preKeyId := optional.NewEmptyUint32()
+	if sm.GetPreKeyId() != 0 {
+		preKeyId = optional.NewOptionalUint32(sm.GetPreKeyId())
+	}
+
 	preKeySignalMessage := protocol.PreKeySignalMessageStructure{
 		Version:        version,
 		RegistrationID: sm.GetRegistrationId(),
@@ -144,7 +149,7 @@ func (j *ProtoBufPreKeySignalMessageSerializer) Deserialize(serialized []byte) (
 		IdentityKey:    sm.GetIdentityKey(),
 		SignedPreKeyID: sm.GetSignedPreKeyId(),
 		Message:        sm.GetMessage(),
-		PreKeyID:       optional.NewOptionalUint32(sm.GetPreKeyId()),
+		PreKeyID:       preKeyId,
 	}
 
 	return &preKeySignalMessage, nil
