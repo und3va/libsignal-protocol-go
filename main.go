@@ -149,7 +149,12 @@ func processSession(this js.Value, args []js.Value) interface{} {
 	if preKeyBundle.OnetimeKey.PubKey != nil && len(preKeyBundle.OnetimeKey.PubKey) > 0 {
 		preKeyPublic, _ = ecc.DecodePoint(preKeyBundle.OnetimeKey.PubKey, 0)
 	}
-	oneTimeKeyId := optional.NewOptionalUint32(uint32(preKeyBundle.OnetimeKey.KeyId))
+	var oneTimeKeyId *optional.Uint32
+	if preKeyBundle.OnetimeKey.KeyId == 0 {
+		oneTimeKeyId = optional.NewEmptyUint32()
+	} else {
+		oneTimeKeyId = optional.NewOptionalUint32(uint32(preKeyBundle.OnetimeKey.KeyId))
+	}
 	signedPreKeyPublic, err := ecc.DecodePoint(preKeyBundle.Signed.PubKey, 0)
 	if err != nil {
 		logger.Error(err)
