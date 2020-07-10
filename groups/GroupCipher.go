@@ -74,7 +74,7 @@ func (c *GroupCipher) Decrypt(senderKeyMessage *protocol.SenderKeyMessage) ([]by
 	keyRecord := c.senderKeyStore.LoadSenderKey(c.senderKeyID)
 
 	if keyRecord.IsEmpty() {
-		return nil, errors.New("No sender key for: " + c.senderKeyID.GroupID())
+		return nil, errors.New("No sender key for: " + c.senderKeyID.GroupID() + c.senderKeyID.Sender().String())
 	}
 
 	// Get the senderkey state by id.

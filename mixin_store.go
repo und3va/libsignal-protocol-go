@@ -241,9 +241,11 @@ func (i *MixinSenderKeyStore) LoadSenderKey(senderKeyName *protocol.SenderKeyNam
 	serialized, err := hex.DecodeString(recordResult.String())
 	if err != nil {
 		fmt.Println(err)
+		return nil
 	}
 	senderKey, err := groupRecord.NewSenderKeyFromBytes(serialized, i.serializer, i.stateSerializer)
 	if err != nil {
+		fmt.Println(err)
 		return nil
 	}
 	return senderKey
