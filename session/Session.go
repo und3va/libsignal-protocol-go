@@ -139,7 +139,7 @@ func (b *Builder) processV3(sessionRecord *record.Session,
 	if !message.PreKeyID().IsEmpty {
 		oneTimePreKey := b.preKeyStore.LoadPreKey(message.PreKeyID().Value)
 		if oneTimePreKey == nil {
-			logger.Error(nilOneTimePreKeyError)
+			logger.Error(nilOneTimePreKeyError, message.PreKeyID().Value)
 			return nil, errors.New(nilOneTimePreKeyError)
 		}
 		parameters.SetOurOneTimePreKey(oneTimePreKey.KeyPair())
