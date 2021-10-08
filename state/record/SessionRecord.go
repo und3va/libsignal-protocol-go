@@ -167,7 +167,7 @@ func (r *Session) PromoteState(promotedState *State) {
 // Serialize will return the session as serialized bytes so it can be
 // persistently stored.
 func (r *Session) Serialize() []byte {
-	return r.serializer.Serialize(r.structure())
+	return r.serializer.Serialize(r.Structure())
 }
 
 // prependStates takes an array/slice of states and prepends it with
@@ -182,10 +182,10 @@ func (r *Session) removeLastState(states []*State) []*State {
 	return states[:len(states)-1]
 }
 
-// structure will return a simple serializable session structure
+// Structure will return a simple serializable session structure
 // from the given structure. This is used for serialization to persistently
 // store a session record.
-func (r *Session) structure() *SessionStructure {
+func (r *Session) Structure() *SessionStructure {
 	previousStates := make([]*StateStructure, len(r.previousStates))
 	for i := range r.previousStates {
 		previousStates[i] = r.previousStates[i].structure()
