@@ -17,7 +17,6 @@ func (d *defaultLogger) log(level, caller, msg string) {
 	if !d.shouldLog(caller) {
 		// return
 	}
-	fmt.Println(msg)
 	t := time.Now()
 	fmt.Println(
 		"["+level+"]",
