@@ -132,13 +132,13 @@ func (k *SenderKey) SetSenderKeyState(id uint32, iteration uint32,
 // Serialize will return the record as serialized bytes so it can be
 // persistently stored.
 func (k *SenderKey) Serialize() []byte {
-	return k.serializer.Serialize(k.structure())
+	return k.serializer.Serialize(k.Structure())
 }
 
-// structure will return a simple serializable record structure.
+// Structure will return a simple serializable record structure.
 // This is used for serialization to persistently
 // store a session record.
-func (k *SenderKey) structure() *SenderKeyStructure {
+func (k *SenderKey) Structure() *SenderKeyStructure {
 	senderKeyStates := make([]*SenderKeyStateStructure, len(k.senderKeyStates))
 	for i := range k.senderKeyStates {
 		senderKeyStates[i] = k.senderKeyStates[i].structure()
