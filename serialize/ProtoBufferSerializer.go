@@ -8,7 +8,7 @@ import (
 	"github.com/RadicalApp/libsignal-protocol-go/protocol"
 	"github.com/RadicalApp/libsignal-protocol-go/util/bytehelper"
 	"github.com/RadicalApp/libsignal-protocol-go/util/optional"
-	proto "github.com/golang/protobuf/proto"
+	proto "google.golang.org/protobuf/proto"
 )
 
 // NewProtoBufSerializer will return a serializer for all Signal objects that will
