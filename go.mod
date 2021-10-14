@@ -8,5 +8,3 @@ require (
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 	google.golang.org/protobuf v1.27.1
 )
-
-replace filippo.io/edwards25519 => github.com/tulir/edwards25519 v1.0.0-at.2

@@ -16,7 +16,7 @@ func sign(privateKey *[32]byte, message []byte, random [64]byte) *[64]byte {
 
 	// Calculate Ed25519 public key from Curve25519 private key
 	var A edwards25519.Point
-	privateKeyScalar, _ := edwards25519.NewScalar().SetBytes(privateKey[:])
+	privateKeyScalar, _ := edwards25519.NewScalar().SetBytesWithClamping(privateKey[:])
 	A.ScalarBaseMult(privateKeyScalar)
 	publicKey := *(*[32]byte)(A.Bytes())
 
