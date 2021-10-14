@@ -80,23 +80,14 @@ func verify(publicKey [32]byte, message []byte, signature *[64]byte) bool {
 	Then move the sign bit into the pubkey from the signature.
 	*/
 
-	//var edY, one, montX, montXMinusOne, montXPlusOne edwards25519.FieldElement
 	var edY, one, montX, montXMinusOne, montXPlusOne field.Element
-	//edwards25519.FeFromBytes(&montX, &publicKey)
 	_, _ = montX.SetBytes(publicKey[:])
-	//edwards25519.FeOne(&one)
 	_ = one.One()
-	//edwards25519.FeSub(&montXMinusOne, &montX, &one)
 	montXMinusOne.Subtract(&montX, &one)
-	//edwards25519.FeAdd(&montXPlusOne, &montX, &one)
 	montXPlusOne.Add(&montX, &one)
-	//edwards25519.FeInvert(&montXPlusOne, &montXPlusOne)
 	montXPlusOne.Invert(&montXPlusOne)
-	//edwards25519.FeMul(&edY, &montXMinusOne, &montXPlusOne)
 	edY.Multiply(&montXMinusOne, &montXPlusOne)
 
-	//var A_ed [32]byte
-	//edwards25519.FeToBytes(&A_ed, &edY)
 	A_ed := *(*[32]byte)(edY.Bytes())
 
 	A_ed[31] |= signature[63] & 0x80
