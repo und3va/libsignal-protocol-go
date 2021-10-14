@@ -1,10 +1,12 @@
 module github.com/RadicalApp/libsignal-protocol-go
 
-go 1.13
+go 1.17
 
 require (
+	filippo.io/edwards25519 v1.0.0-rc.1
 	github.com/RadicalApp/complete v0.0.0-20170329192659-17e6c0ee499b
-	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412
-	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 	google.golang.org/protobuf v1.27.1
 )
+
+replace filippo.io/edwards25519 => github.com/tulir/edwards25519 v1.0.0-at.2
