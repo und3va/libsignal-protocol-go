@@ -34,7 +34,7 @@ type GroupCipher struct {
 }
 
 // Encrypt will take the given message in bytes and return encrypted bytes.
-func (c *GroupCipher) Encrypt(plaintext []byte) (protocol.CiphertextMessage, error) {
+func (c *GroupCipher) Encrypt(plaintext []byte) (protocol.GroupCiphertextMessage, error) {
 	// Load the sender key based on id from our store.
 	keyRecord := c.senderKeyStore.LoadSenderKey(c.senderKeyID)
 	senderKeyState, err := keyRecord.SenderKeyState()
