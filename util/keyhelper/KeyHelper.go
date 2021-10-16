@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"time"
 
-	"github.com/RadicalApp/complete"
 	"go.mau.fi/libsignal/ecc"
 	"go.mau.fi/libsignal/keys/identity"
 	"go.mau.fi/libsignal/state/record"
@@ -22,19 +21,6 @@ func GenerateIdentityKeyPair() (*identity.KeyPair, error) {
 
 	publicKey := identity.NewKey(keyPair.PublicKey())
 	return identity.NewKeyPair(publicKey, keyPair.PrivateKey()), nil
-}
-
-// GenerateIdentityKeyPairAsync generates an identity keypair asyncronously.
-func GenerateIdentityKeyPairAsync(completion complete.Completionable) {
-	go func() {
-		r, err := GenerateIdentityKeyPair()
-		if err != nil {
-			completion.OnFailure(err.Error())
-			return
-		}
-		result := complete.NewResult(r)
-		completion.OnSuccess(&result)
-	}()
 }
 
 // GeneratePreKeys generates a list of PreKeys. Client shsould do this at

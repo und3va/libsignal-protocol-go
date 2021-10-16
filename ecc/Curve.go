@@ -5,9 +5,9 @@ import (
 	"errors"
 	"io"
 
-	"github.com/RadicalApp/complete"
-	"go.mau.fi/libsignal/logger"
 	"golang.org/x/crypto/curve25519"
+
+	"go.mau.fi/libsignal/logger"
 )
 
 // DjbType is the Diffie-Hellman curve type (curve25519) created by D. J. Bernstein.
@@ -89,19 +89,6 @@ func VerifySignature(signingKey ECPublicKeyable, message []byte, signature [64]b
 	return valid
 }
 
-// VerifySignatureAsync verifies that a message was signed with the given key asyncronously.
-func VerifySignatureAsync(signingKey ECPublicKeyable, message []byte, signature [64]byte, completion complete.Completionable) {
-	go func() {
-		r := VerifySignature(signingKey, message, signature)
-		if r == false {
-			completion.OnFailure("Signature invalid")
-			return
-		}
-		result := complete.NewResult(r)
-		completion.OnSuccess(&result)
-	}()
-}
-
 // CalculateSignature signs a message with the given private key.
 func CalculateSignature(signingKey ECPrivateKeyable, message []byte) [64]byte {
 	logger.Debug("Signing bytes with signing key")
@@ -116,17 +103,4 @@ func CalculateSignature(signingKey ECPrivateKeyable, message []byte) [64]byte {
 	// Sign the message.
 	signature := sign(&privateKey, message, random)
 	return *signature
-}
-
-// CalculateSignatureAsync signs a message with the given private key asyncronously.
-func CalculateSignatureAsync(signingKey ECPrivateKeyable, message []byte, completion complete.Completionable) {
-	go func() {
-		signature := CalculateSignature(signingKey, message)
-		if signature == [64]byte{} {
-			completion.OnFailure("Error calculating signature")
-			return
-		}
-		result := complete.NewResult(signature)
-		completion.OnSuccess(&result)
-	}()
 }
