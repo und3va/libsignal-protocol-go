@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/RadicalApp/libsignal-protocol-go/logger"
-	"github.com/RadicalApp/libsignal-protocol-go/protocol"
-	"github.com/RadicalApp/libsignal-protocol-go/util/bytehelper"
-	"github.com/RadicalApp/libsignal-protocol-go/util/optional"
+	"go.mau.fi/libsignal/logger"
+	"go.mau.fi/libsignal/protocol"
+	"go.mau.fi/libsignal/util/bytehelper"
+	"go.mau.fi/libsignal/util/optional"
 	proto "google.golang.org/protobuf/proto"
 )
 

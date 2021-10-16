@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/RadicalApp/libsignal-protocol-go/keys/prekey"
-	"github.com/RadicalApp/libsignal-protocol-go/logger"
-	"github.com/RadicalApp/libsignal-protocol-go/session"
-	"github.com/RadicalApp/libsignal-protocol-go/state/record"
+	"go.mau.fi/libsignal/keys/prekey"
+	"go.mau.fi/libsignal/logger"
+	"go.mau.fi/libsignal/session"
+	"go.mau.fi/libsignal/state/record"
 )
 
 // TestSerializing tests serialization and deserialization of Signal objects.

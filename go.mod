@@ -1,4 +1,4 @@
-module github.com/RadicalApp/libsignal-protocol-go
+module go.mau.fi/libsignal
 
 go 1.17
 

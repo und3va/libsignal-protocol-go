@@ -3,10 +3,10 @@
 package root
 
 import (
-	"github.com/RadicalApp/libsignal-protocol-go/ecc"
-	"github.com/RadicalApp/libsignal-protocol-go/kdf"
-	"github.com/RadicalApp/libsignal-protocol-go/keys/chain"
-	"github.com/RadicalApp/libsignal-protocol-go/keys/session"
+	"go.mau.fi/libsignal/ecc"
+	"go.mau.fi/libsignal/kdf"
+	"go.mau.fi/libsignal/keys/chain"
+	"go.mau.fi/libsignal/keys/session"
 )
 
 // DerivedSecretsSize is the size of the derived secrets for root keys.

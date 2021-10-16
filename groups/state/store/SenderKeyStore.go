@@ -1,8 +1,8 @@
 package store
 
 import (
-	"github.com/RadicalApp/libsignal-protocol-go/groups/state/record"
-	"github.com/RadicalApp/libsignal-protocol-go/protocol"
+	"go.mau.fi/libsignal/groups/state/record"
+	"go.mau.fi/libsignal/protocol"
 )
 
 type SenderKey interface {

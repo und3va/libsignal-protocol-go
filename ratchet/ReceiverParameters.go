@@ -1,8 +1,8 @@
 package ratchet
 
 import (
-	"github.com/RadicalApp/libsignal-protocol-go/ecc"
-	"github.com/RadicalApp/libsignal-protocol-go/keys/identity"
+	"go.mau.fi/libsignal/ecc"
+	"go.mau.fi/libsignal/keys/identity"
 )
 
 // NewReceiverParameters creates a structure with all the keys needed to construct

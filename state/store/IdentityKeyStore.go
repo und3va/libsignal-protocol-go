@@ -1,8 +1,8 @@
 package store
 
 import (
-	"github.com/RadicalApp/libsignal-protocol-go/keys/identity"
-	"github.com/RadicalApp/libsignal-protocol-go/protocol"
+	"go.mau.fi/libsignal/keys/identity"
+	"go.mau.fi/libsignal/protocol"
 )
 
 // IdentityKey provides an interface to identity information.

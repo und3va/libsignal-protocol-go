@@ -4,9 +4,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/RadicalApp/libsignal-protocol-go/ecc"
-	"github.com/RadicalApp/libsignal-protocol-go/keys/identity"
-	"github.com/RadicalApp/libsignal-protocol-go/util/optional"
+	"go.mau.fi/libsignal/ecc"
+	"go.mau.fi/libsignal/keys/identity"
+	"go.mau.fi/libsignal/util/optional"
 )
 
 // PreKeySignalMessageSerializer is an interface for serializing and deserializing

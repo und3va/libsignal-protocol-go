@@ -3,10 +3,10 @@ package serialize
 import (
 	"encoding/json"
 
-	groupRecord "github.com/RadicalApp/libsignal-protocol-go/groups/state/record"
-	"github.com/RadicalApp/libsignal-protocol-go/logger"
-	"github.com/RadicalApp/libsignal-protocol-go/protocol"
-	"github.com/RadicalApp/libsignal-protocol-go/state/record"
+	groupRecord "go.mau.fi/libsignal/groups/state/record"
+	"go.mau.fi/libsignal/logger"
+	"go.mau.fi/libsignal/protocol"
+	"go.mau.fi/libsignal/state/record"
 )
 
 // NewJSONSerializer will return a serializer for all Signal objects that will

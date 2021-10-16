@@ -5,16 +5,16 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/RadicalApp/libsignal-protocol-go/ecc"
-	"github.com/RadicalApp/libsignal-protocol-go/keys/prekey"
-	"github.com/RadicalApp/libsignal-protocol-go/logger"
-	"github.com/RadicalApp/libsignal-protocol-go/protocol"
-	"github.com/RadicalApp/libsignal-protocol-go/ratchet"
-	"github.com/RadicalApp/libsignal-protocol-go/serialize"
-	"github.com/RadicalApp/libsignal-protocol-go/state/record"
-	"github.com/RadicalApp/libsignal-protocol-go/state/store"
-	"github.com/RadicalApp/libsignal-protocol-go/util/medium"
-	"github.com/RadicalApp/libsignal-protocol-go/util/optional"
+	"go.mau.fi/libsignal/ecc"
+	"go.mau.fi/libsignal/keys/prekey"
+	"go.mau.fi/libsignal/logger"
+	"go.mau.fi/libsignal/protocol"
+	"go.mau.fi/libsignal/ratchet"
+	"go.mau.fi/libsignal/serialize"
+	"go.mau.fi/libsignal/state/record"
+	"go.mau.fi/libsignal/state/store"
+	"go.mau.fi/libsignal/util/medium"
+	"go.mau.fi/libsignal/util/optional"
 )
 
 // Define error constants used for error messages.

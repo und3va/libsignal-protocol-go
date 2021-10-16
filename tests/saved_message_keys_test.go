@@ -3,11 +3,11 @@ package tests
 import (
 	"testing"
 
-	"github.com/RadicalApp/libsignal-protocol-go/keys/message"
-	"github.com/RadicalApp/libsignal-protocol-go/keys/prekey"
-	"github.com/RadicalApp/libsignal-protocol-go/logger"
-	"github.com/RadicalApp/libsignal-protocol-go/protocol"
-	"github.com/RadicalApp/libsignal-protocol-go/session"
+	"go.mau.fi/libsignal/keys/message"
+	"go.mau.fi/libsignal/keys/prekey"
+	"go.mau.fi/libsignal/logger"
+	"go.mau.fi/libsignal/protocol"
+	"go.mau.fi/libsignal/session"
 )
 
 // TestSavedMessageKeys tests the ability to save message keys for use in

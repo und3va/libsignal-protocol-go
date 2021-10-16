@@ -1,16 +1,16 @@
 package record
 
 import (
-	"github.com/RadicalApp/libsignal-protocol-go/ecc"
-	"github.com/RadicalApp/libsignal-protocol-go/kdf"
-	"github.com/RadicalApp/libsignal-protocol-go/keys/chain"
-	"github.com/RadicalApp/libsignal-protocol-go/keys/identity"
-	"github.com/RadicalApp/libsignal-protocol-go/keys/message"
-	"github.com/RadicalApp/libsignal-protocol-go/keys/root"
-	"github.com/RadicalApp/libsignal-protocol-go/keys/session"
-	"github.com/RadicalApp/libsignal-protocol-go/logger"
-	"github.com/RadicalApp/libsignal-protocol-go/util/errorhelper"
-	"github.com/RadicalApp/libsignal-protocol-go/util/optional"
+	"go.mau.fi/libsignal/ecc"
+	"go.mau.fi/libsignal/kdf"
+	"go.mau.fi/libsignal/keys/chain"
+	"go.mau.fi/libsignal/keys/identity"
+	"go.mau.fi/libsignal/keys/message"
+	"go.mau.fi/libsignal/keys/root"
+	"go.mau.fi/libsignal/keys/session"
+	"go.mau.fi/libsignal/logger"
+	"go.mau.fi/libsignal/util/errorhelper"
+	"go.mau.fi/libsignal/util/optional"
 )
 
 const maxMessageKeys int = 2000
