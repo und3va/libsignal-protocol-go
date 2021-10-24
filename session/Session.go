@@ -115,7 +115,7 @@ func (b *Builder) processV3(sessionRecord *record.Session,
 		message.BaseKey().Serialize(),
 	)
 	if sessionExists {
-		logger.Warning("We've already setup a session for this V3 message, letting bundled message fall through...")
+		logger.Debug("We've already setup a session for this V3 message, letting bundled message fall through...")
 		return optional.NewEmptyUint32(), nil
 	}
 
