@@ -1,8 +1,7 @@
 package groups
 
 import (
-	"errors"
-	"strconv"
+	"fmt"
 
 	"go.mau.fi/libsignal/cipher"
 	"go.mau.fi/libsignal/ecc"
@@ -10,6 +9,7 @@ import (
 	"go.mau.fi/libsignal/groups/state/record"
 	"go.mau.fi/libsignal/groups/state/store"
 	"go.mau.fi/libsignal/protocol"
+	"go.mau.fi/libsignal/signalerror"
 )
 
 // NewGroupCipher will return a new group message cipher that can be used for
@@ -74,7 +74,7 @@ func (c *GroupCipher) Decrypt(senderKeyMessage *protocol.SenderKeyMessage) ([]by
 	keyRecord := c.senderKeyStore.LoadSenderKey(c.senderKeyID)
 
 	if keyRecord.IsEmpty() {
-		return nil, errors.New("No sender key for: " + c.senderKeyID.GroupID() + c.senderKeyID.Sender().String())
+		return nil, fmt.Errorf("%w for %s in %s", signalerror.ErrNoSenderKeyForUser, c.senderKeyID.Sender().String(), c.senderKeyID.GroupID())
 	}
 
 	// Get the senderkey state by id.
@@ -86,7 +86,7 @@ func (c *GroupCipher) Decrypt(senderKeyMessage *protocol.SenderKeyMessage) ([]by
 	// Verify the signature of the senderkey message.
 	verified := c.verifySignature(senderKeyState.SigningKey().PublicKey(), senderKeyMessage)
 	if !verified {
-		return nil, errors.New("Sender Key State failed verification with given pub key!")
+		return nil, signalerror.ErrSenderKeyStateVerificationFailed
 	}
 
 	senderKey, err := c.getSenderKey(senderKeyState, senderKeyMessage.Iteration())
@@ -120,13 +120,11 @@ func (c *GroupCipher) getSenderKey(senderKeyState *record.SenderKeyState, iterat
 		if senderKeyState.HasSenderMessageKey(iteration) {
 			return senderKeyState.RemoveSenderMessageKey(iteration), nil
 		}
-		i1 := strconv.Itoa(int(senderChainKey.Iteration()))
-		i2 := strconv.Itoa(int(iteration))
-		return nil, errors.New("Received message with old counter: " + i1 + ", " + i2)
+		return nil, fmt.Errorf("%w (current: %d, received: %d)", signalerror.ErrOldCounter, senderChainKey.Iteration(), iteration)
 	}
 
 	if iteration-senderChainKey.Iteration() > 2000 {
-		return nil, errors.New("Over 2000 messages into the future!")
+		return nil, signalerror.ErrTooFarIntoFuture
 	}
 
 	for senderChainKey.Iteration() < iteration {

@@ -1,8 +1,7 @@
 package session
 
 import (
-	"errors"
-	"strconv"
+	"fmt"
 
 	"go.mau.fi/libsignal/cipher"
 	"go.mau.fi/libsignal/ecc"
@@ -10,6 +9,7 @@ import (
 	"go.mau.fi/libsignal/keys/message"
 	"go.mau.fi/libsignal/logger"
 	"go.mau.fi/libsignal/protocol"
+	"go.mau.fi/libsignal/signalerror"
 	"go.mau.fi/libsignal/state/record"
 	"go.mau.fi/libsignal/state/store"
 	"go.mau.fi/libsignal/util/bytehelper"
@@ -142,7 +142,7 @@ func (d *Cipher) Decrypt(ciphertextMessage *protocol.SignalMessage) ([]byte, err
 // is stored in the session store and returns the message keys used for encryption.
 func (d *Cipher) DecryptAndGetKey(ciphertextMessage *protocol.SignalMessage) ([]byte, *message.Keys, error) {
 	if !d.sessionStore.ContainsSession(d.remoteAddress) {
-		return nil, nil, errors.New("No session for: " + d.remoteAddress.String())
+		return nil, nil, fmt.Errorf("%w %s", signalerror.ErrNoSessionForUser, d.remoteAddress.String())
 	}
 
 	// Load the session record from our session store and decrypt the message.
@@ -226,7 +226,7 @@ func (d *Cipher) DecryptWithRecord(sessionRecord *record.Session, ciphertext *pr
 			return plaintext, messageKeys, nil
 		}
 
-		return nil, nil, errors.New("No valid sessions.")
+		return nil, nil, signalerror.ErrNoValidSessions
 	}
 
 	// If decryption was successful, set the session state and return the plain text.
@@ -239,15 +239,13 @@ func (d *Cipher) DecryptWithRecord(sessionRecord *record.Session, ciphertext *pr
 func (d *Cipher) DecryptWithState(sessionState *record.State, ciphertextMessage *protocol.SignalMessage) ([]byte, *message.Keys, error) {
 	logger.Debug("Decrypting ciphertext with session state: ", sessionState)
 	if !sessionState.HasSenderChain() {
-		err := "Uninitialized session!"
-		logger.Error("Unable to decrypt message with state: ", err)
-		return nil, nil, errors.New(err)
+		logger.Error("Unable to decrypt message with state: ", signalerror.ErrUninitializedSession)
+		return nil, nil, signalerror.ErrUninitializedSession
 	}
 
 	if ciphertextMessage.MessageVersion() != sessionState.Version() {
-		err := "Wrong message version!"
-		logger.Error("Unable to decrypt message with state: ", err)
-		return nil, nil, errors.New(err)
+		logger.Error("Unable to decrypt message with state: ", signalerror.ErrWrongMessageVersion)
+		return nil, nil, signalerror.ErrWrongMessageVersion
 	}
 
 	messageVersion := ciphertextMessage.MessageVersion()
@@ -256,19 +254,19 @@ func (d *Cipher) DecryptWithState(sessionState *record.State, ciphertextMessage 
 	chainKey, chainCreateErr := getOrCreateChainKey(sessionState, theirEphemeral)
 	if chainCreateErr != nil {
 		logger.Error("Unable to get or create chain key: ", chainCreateErr)
-		return nil, nil, chainCreateErr
+		return nil, nil, fmt.Errorf("failed to get or create chain key: %w", chainCreateErr)
 	}
 
 	messageKeys, keysCreateErr := getOrCreateMessageKeys(sessionState, theirEphemeral, chainKey, counter)
 	if keysCreateErr != nil {
 		logger.Error("Unable to get or create message keys: ", keysCreateErr)
-		return nil, nil, keysCreateErr
+		return nil, nil, fmt.Errorf("failed to get or create message keys: %w", keysCreateErr)
 	}
 
 	err := ciphertextMessage.VerifyMac(messageVersion, sessionState.RemoteIdentityKey(), sessionState.LocalIdentityKey(), messageKeys.MacKey())
 	if err != nil {
 		logger.Error("Unable to verify ciphertext mac: ", err)
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to verify ciphertext MAC: %w", err)
 	}
 
 	plaintext, err := d.DecryptWithKey(ciphertextMessage, messageKeys)
@@ -288,15 +286,11 @@ func getOrCreateMessageKeys(sessionState *record.State, theirEphemeral ecc.ECPub
 		if sessionState.HasMessageKeys(theirEphemeral, counter) {
 			return sessionState.RemoveMessageKeys(theirEphemeral, counter), nil
 		}
-		index := strconv.FormatUint(uint64(chainKey.Index()), 10)
-		count := strconv.FormatUint(uint64(counter), 10)
-		return nil, errors.New(
-			"Received message with old counter: " + index + " , " + count,
-		)
+		return nil, fmt.Errorf("%w (index: %d, count: %d)", signalerror.ErrOldCounter, chainKey.Index(), counter)
 	}
 
 	if counter-chainKey.Index() > maxFutureMessages {
-		return nil, errors.New("Over 2000 messages into the future!")
+		return nil, signalerror.ErrTooFarIntoFuture
 	}
 
 	for chainKey.Index() < counter {

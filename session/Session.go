@@ -2,7 +2,6 @@
 package session
 
 import (
-	"errors"
 	"fmt"
 
 	"go.mau.fi/libsignal/ecc"
@@ -11,17 +10,12 @@ import (
 	"go.mau.fi/libsignal/protocol"
 	"go.mau.fi/libsignal/ratchet"
 	"go.mau.fi/libsignal/serialize"
+	"go.mau.fi/libsignal/signalerror"
 	"go.mau.fi/libsignal/state/record"
 	"go.mau.fi/libsignal/state/store"
 	"go.mau.fi/libsignal/util/medium"
 	"go.mau.fi/libsignal/util/optional"
 )
-
-// Define error constants used for error messages.
-const untrustedIdentityError string = "Untrusted identity"
-const noSignedPreKeyError string = "No signed prekey!"
-const invalidSignatureError string = "Invalid signature on device key!"
-const nilOneTimePreKeyError string = "Prekey store returned a nil one time prekey! Was the key already processed?"
 
 // NewBuilder constructs a session builder.
 func NewBuilder(sessionStore store.Session, preKeyStore store.PreKey,
@@ -86,7 +80,7 @@ func (b *Builder) Process(sessionRecord *record.Session, message *protocol.PreKe
 	// Check to see if the keys are trusted.
 	theirIdentityKey := message.IdentityKey()
 	if !(b.identityKeyStore.IsTrustedIdentity(b.remoteAddress, theirIdentityKey)) {
-		return nil, errors.New(untrustedIdentityError)
+		return nil, signalerror.ErrUntrustedIdentity
 	}
 
 	// Use version 3 of the signal/axolotl protocol.
@@ -122,7 +116,7 @@ func (b *Builder) processV3(sessionRecord *record.Session,
 	// Load our signed prekey from our signed prekey store.
 	ourSignedPreKeyRecord := b.signedPreKeyStore.LoadSignedPreKey(message.SignedPreKeyID())
 	if ourSignedPreKeyRecord == nil {
-		return nil, fmt.Errorf("%s %d", noSignedPreKeyError, message.SignedPreKeyID())
+		return nil, fmt.Errorf("%w with ID %d", signalerror.ErrNoSignedPreKey, message.SignedPreKeyID())
 	}
 	ourSignedPreKey := ourSignedPreKeyRecord.KeyPair()
 
@@ -139,8 +133,7 @@ func (b *Builder) processV3(sessionRecord *record.Session,
 	if !message.PreKeyID().IsEmpty {
 		oneTimePreKey := b.preKeyStore.LoadPreKey(message.PreKeyID().Value)
 		if oneTimePreKey == nil {
-			logger.Error(nilOneTimePreKeyError, message.PreKeyID().Value)
-			return nil, errors.New(nilOneTimePreKeyError)
+			return nil, fmt.Errorf("%w with ID %d", signalerror.ErrNoOneTimeKeyFound, message.PreKeyID().Value)
 		}
 		parameters.SetOurOneTimePreKey(oneTimePreKey.KeyPair())
 	} else {
@@ -181,12 +174,12 @@ func (b *Builder) processV3(sessionRecord *record.Session,
 func (b *Builder) ProcessBundle(preKey *prekey.Bundle) error {
 	// Check to see if the keys are trusted.
 	if !(b.identityKeyStore.IsTrustedIdentity(b.remoteAddress, preKey.IdentityKey())) {
-		return errors.New(untrustedIdentityError)
+		return signalerror.ErrUntrustedIdentity
 	}
 
 	// Check to see if the bundle has a signed pre key.
 	if preKey.SignedPreKey() == nil {
-		return errors.New(noSignedPreKeyError)
+		return signalerror.ErrNoSignedPreKey
 	}
 
 	// Verify the signature of the pre key
@@ -194,7 +187,7 @@ func (b *Builder) ProcessBundle(preKey *prekey.Bundle) error {
 	preKeyBytes := preKey.SignedPreKey().Serialize()
 	preKeySignature := preKey.SignedPreKeySignature()
 	if !ecc.VerifySignature(preKeyPublic, preKeyBytes, preKeySignature) {
-		return errors.New(invalidSignatureError)
+		return signalerror.ErrInvalidSignature
 	}
 
 	// Load our session and generate keys.

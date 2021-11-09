@@ -3,12 +3,13 @@ package protocol
 import (
 	"crypto/hmac"
 	"crypto/sha256"
-	"errors"
+	"fmt"
 	"strconv"
 
 	"go.mau.fi/libsignal/ecc"
 	"go.mau.fi/libsignal/keys/identity"
 	"go.mau.fi/libsignal/logger"
+	"go.mau.fi/libsignal/signalerror"
 	"go.mau.fi/libsignal/util/bytehelper"
 )
 
@@ -39,20 +40,17 @@ func NewSignalMessageFromBytes(serialized []byte, serializer SignalMessageSerial
 func NewSignalMessageFromStruct(structure *SignalMessageStructure, serializer SignalMessageSerializer) (*SignalMessage, error) {
 	// Throw an error if the given message structure is an unsupported version.
 	if structure.Version <= UnsupportedVersion {
-		err := "Legacy message: " + strconv.Itoa(structure.Version)
-		return nil, errors.New(err)
+		return nil, fmt.Errorf("%w %d (normal message)", signalerror.ErrOldMessageVersion, structure.Version)
 	}
 
 	// Throw an error if the given message structure is a future version.
 	if structure.Version > CurrentVersion {
-		err := "Unknown version: " + strconv.Itoa(structure.Version)
-		return nil, errors.New(err)
+		return nil, fmt.Errorf("%w %d (normal message)", signalerror.ErrUnknownMessageVersion, structure.Version)
 	}
 
 	// Throw an error if the structure is missing critical fields.
 	if structure.CipherText == nil || structure.RatchetKey == nil {
-		err := "Incomplete message."
-		return nil, errors.New(err)
+		return nil, fmt.Errorf("%w (normal message)", signalerror.ErrIncompleteMessage)
 	}
 
 	// Create the signal message object from the structure.
@@ -185,7 +183,7 @@ func (s *SignalMessage) VerifyMac(messageVersion int, senderIdentityKey,
 
 	// Return an error if our calculated mac doesn't match the mac sent to us.
 	if !hmac.Equal(ourMac, theirMac) {
-		return errors.New("Bad Mac!")
+		return signalerror.ErrBadMAC
 	}
 
 	return nil

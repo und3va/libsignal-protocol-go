@@ -1,11 +1,11 @@
 package protocol
 
 import (
-	"errors"
-	"strconv"
+	"fmt"
 
 	"go.mau.fi/libsignal/ecc"
 	"go.mau.fi/libsignal/keys/identity"
+	"go.mau.fi/libsignal/signalerror"
 	"go.mau.fi/libsignal/util/optional"
 )
 
@@ -37,20 +37,17 @@ func NewPreKeySignalMessageFromStruct(structure *PreKeySignalMessageStructure,
 
 	// Throw an error if the given message structure is an unsupported version.
 	if structure.Version <= UnsupportedVersion {
-		err := "Legacy message: " + strconv.Itoa(structure.Version)
-		return nil, errors.New(err)
+		return nil, fmt.Errorf("%w %d (prekey message)", signalerror.ErrOldMessageVersion, structure.Version)
 	}
 
 	// Throw an error if the given message structure is a future version.
 	if structure.Version > CurrentVersion {
-		err := "Unknown version: " + strconv.Itoa(structure.Version)
-		return nil, errors.New(err)
+		return nil, fmt.Errorf("%w %d (prekey message)", signalerror.ErrUnknownMessageVersion, structure.Version)
 	}
 
 	// Throw an error if the structure is missing critical fields.
 	if structure.BaseKey == nil || structure.IdentityKey == nil || structure.Message == nil {
-		err := "Incomplete message."
-		return nil, errors.New(err)
+		return nil, fmt.Errorf("%w (prekey message)", signalerror.ErrIncompleteMessage)
 	}
 
 	// Create the signal message object from the structure.

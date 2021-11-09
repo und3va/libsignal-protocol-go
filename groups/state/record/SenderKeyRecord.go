@@ -1,10 +1,10 @@
 package record
 
 import (
-	"errors"
 	"fmt"
 
 	"go.mau.fi/libsignal/ecc"
+	"go.mau.fi/libsignal/signalerror"
 )
 
 const maxStates = 5
@@ -85,7 +85,7 @@ func (k *SenderKey) SenderKeyState() (*SenderKeyState, error) {
 	if len(k.senderKeyStates) > 0 {
 		return k.senderKeyStates[0], nil
 	}
-	return nil, errors.New("No Sender Keys State in Record")
+	return nil, signalerror.ErrNoSenderKeyStatesInRecord
 }
 
 // GetSenderKeyStateByID will return the sender key state with the given
@@ -97,7 +97,7 @@ func (k *SenderKey) GetSenderKeyStateByID(keyID uint32) (*SenderKeyState, error)
 		}
 	}
 
-	return nil, fmt.Errorf("No sender key for for ID: %d", keyID)
+	return nil, fmt.Errorf("%w %d", signalerror.ErrNoSenderKeyStateForID, keyID)
 }
 
 // IsEmpty will return false if there is more than one state in this

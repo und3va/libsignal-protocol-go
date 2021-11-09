@@ -3,6 +3,7 @@ package ecc
 import (
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"io"
 
 	"golang.org/x/crypto/curve25519"
@@ -12,6 +13,8 @@ import (
 
 // DjbType is the Diffie-Hellman curve type (curve25519) created by D. J. Bernstein.
 const DjbType = 0x05
+
+var ErrBadKeyType = errors.New("bad key type")
 
 // DecodePoint will take the given bytes and offset and return an ECPublicKeyable object.
 // This is used to check the byte at the given offset in the byte array for a special
@@ -25,7 +28,7 @@ func DecodePoint(bytes []byte, offset int) (ECPublicKeyable, error) {
 		copy(keyBytes[:], bytes[offset+1:])
 		return NewDjbECPublicKey(keyBytes), nil
 	default:
-		return nil, errors.New("Bad key type: " + string(keyType))
+		return nil, fmt.Errorf("%w %d", ErrBadKeyType, keyType)
 	}
 }
 

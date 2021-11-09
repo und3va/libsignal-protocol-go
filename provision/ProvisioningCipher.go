@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"go.mau.fi/libsignal/cipher"
@@ -34,6 +35,11 @@ func verifyMAC(key, input, mac []byte) bool {
 	return hmac.Equal(m.Sum(nil), mac)
 }
 
+var (
+	ErrBadVersionNumber = errors.New("bad version number in provisioning message")
+	ErrVerifyMACFailed  = errors.New("failed to verify MAC in provisioning message")
+)
+
 func Decrypt(privateKey string, content string) (string, error) {
 	ourPrivateKey, err := base64.StdEncoding.DecodeString(privateKey)
 	if err != nil {
@@ -53,7 +59,7 @@ func Decrypt(privateKey string, content string) (string, error) {
 	masterEphemeral := publicKeyable.PublicKey()
 	message := envelope.Body
 	if message[0] != 1 {
-		return "", fmt.Errorf("Bad version number on ProvisioningMessage %s", err.Error())
+		return "", ErrBadVersionNumber
 	}
 
 	iv := message[1 : 16+1]
@@ -71,7 +77,7 @@ func Decrypt(privateKey string, content string) (string, error) {
 	macKey := derivedSecretBytes[32:]
 
 	if !verifyMAC(macKey, ivAndCiphertext, mac) {
-		return "", fmt.Errorf("Verify Mac failed")
+		return "", ErrVerifyMACFailed
 	}
 	plaintext, err := cipher.DecryptCbc(iv, aesKey, cipherText)
 	if err != nil {
