@@ -7,10 +7,11 @@ import (
 const ADDRESS_SEPARATOR = ":"
 
 // NewSignalAddress returns a new signal address.
-func NewSignalAddress(name string, deviceID uint32) *SignalAddress {
+func NewSignalAddress(name string, deviceID uint32, suffix string) *SignalAddress {
 	addr := SignalAddress{
 		name:     name,
 		deviceID: deviceID,
+		suffix:   suffix,
 	}
 
 	return &addr
@@ -20,19 +21,10 @@ func NewSignalAddress(name string, deviceID uint32) *SignalAddress {
 type SignalAddress struct {
 	name     string
 	deviceID uint32
-}
-
-// Name returns the signal address's name.
-func (s *SignalAddress) Name() string {
-	return s.name
-}
-
-// DeviceID returns the signal address's device ID.
-func (s *SignalAddress) DeviceID() uint32 {
-	return s.deviceID
+	suffix   string
 }
 
 // String returns a string of both the address name and device id.
 func (s *SignalAddress) String() string {
-	return fmt.Sprintf("%s%s%d", s.name, ADDRESS_SEPARATOR, s.deviceID)
+	return fmt.Sprintf("%s%s%d%s", s.name, ADDRESS_SEPARATOR, s.deviceID, s.suffix)
 }
