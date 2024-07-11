@@ -1,4 +1,4 @@
-module go.mau.fi/libsignal
+module github.com/und3va/libsignal-protocol-go
 
 go 1.18
 
